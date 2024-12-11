@@ -1,0 +1,51 @@
+/* globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.login-container {
+  @apply flex justify-center items-center h-screen bg-gray-200;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden; /* Menghindari scrollbar horizontal */
+}
+
+.wrapper {
+  @apply flex justify-center items-center;
+}
+
+.container {
+  width: 100%; /* Atur ke 100% untuk responsif */
+  max-width: 1440px;
+  height: auto; /* Ganti dengan auto untuk tinggi */
+  max-height: 1024px; /* Batasi tinggi maksimum */
+  transform-origin: top left;
+  transform: scale(1);
+  background-color: white;
+  overflow: hidden;
+}
+
+/* Media query untuk layar lebih kecil dari 1440px */
+@media (max-width: 1440px) {
+  .container {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    transform: scale(0.7);
+  }
+}
+
+.login-button {
+  @apply px-4 py-2 text-lg cursor-pointer;
+}

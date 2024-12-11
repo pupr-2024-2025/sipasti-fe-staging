@@ -1,0 +1,49 @@
+import React from "react";
+import colors from "../styles/colors";
+
+const InputField = ({ label, placeholder, state, value, onChange }) => {
+  const baseClasses =
+    "p-3 min-h-12 w-full border-[1.5px] rounded-[16px] text-Small"; // Rounded border with 16px
+  let stateClasses = "";
+
+  const variants = {
+    border:
+      "border-surface-light-outline text-emphasis-on_surface-small  hover: border-blue-500 ",
+  };
+
+  // switch (state) {
+  //   case "enabled":
+  //     stateClasses = "border-surface-light-outline";
+  //     break;
+  //   case "hovered":
+  //     stateClasses = "border-blue-500";
+  //     break;
+  //   case "pressed":
+  //     stateClasses = "border-blue-700";
+  //     break;
+  //   case "focused":
+  //     stateClasses = "border-custom-blue-500 ring-2 ring-blue-300";
+  //     break;
+  //   case "disabled":
+  //     stateClasses = "border-gray-200 bg-gray-100 cursor-not-allowed";
+  //     break;
+  //   default:
+  //     stateClasses = "border-2 border-surface-light-outline";
+  // }
+
+  return (
+    <div className="mb-4">
+      <label className="text-B2 text-emphasis-on_surface-high">{label}</label>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        className={`${baseClasses} ${stateClasses}`} // Combined classes
+        disabled={state === "disabled"}
+      />
+    </div>
+  );
+};
+
+export default InputField;
