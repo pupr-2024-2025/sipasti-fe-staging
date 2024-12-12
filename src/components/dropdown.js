@@ -23,7 +23,7 @@ const Dropdown = ({
     setIsBrowser(typeof window !== "undefined");
   }, []);
 
-  console.log("options", label, disableMapping);
+  // console.log("options", label, disableMapping);
 
   const formattedOptions = disableMapping
     ? options

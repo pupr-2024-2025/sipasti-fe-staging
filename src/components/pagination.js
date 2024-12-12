@@ -3,20 +3,20 @@ import { ArrowLeft2, ArrowRight2 } from "iconsax-react";
 
 const Pagination = ({ currentPage, itemsPerPage, totalData, onPageChange }) => {
   const [hoveredPage, setHoveredPage] = useState(null);
-  const [pressedPage, setPressedPage] = useState(null);
+  const [pressedPage, setPressedPage] = useState(null); // New state for pressed page
 
   const totalPages = Math.ceil(totalData / itemsPerPage);
 
   const handlePageClick = (page) => {
     if (page !== currentPage) {
       onPageChange(page);
-      setPressedPage(page);
+      setPressedPage(page); // Set pressed page when clicking
     }
   };
 
   const renderPageNumbers = () => {
     const pageNumbers = [];
-    const maxPageNumbers = 5;
+    const maxPageNumbers = 5; // Limit of page numbers to display
     let startPage, endPage;
 
     if (totalPages <= maxPageNumbers) {
@@ -39,11 +39,12 @@ const Pagination = ({ currentPage, itemsPerPage, totalData, onPageChange }) => {
       pageNumbers.push(
         <li key={i} className="mx-1 cursor-pointer">
           <button
+            type="button"
             onClick={() => handlePageClick(i)}
             onMouseEnter={() => setHoveredPage(i)}
             onMouseLeave={() => {
               setHoveredPage(null);
-              setPressedPage(null);
+              setPressedPage(null); // Reset pressed state on mouse leave
             }}
             className={`rounded-full transition-transform duration-200 ease-in-out ${
               i === currentPage
@@ -94,6 +95,7 @@ const Pagination = ({ currentPage, itemsPerPage, totalData, onPageChange }) => {
         <ul className="flex items-center">
           <li>
             <button
+              type="button"
               onClick={() => handlePageClick(currentPage - 1)}
               disabled={currentPage === 1}
               onMouseEnter={() => currentPage > 1 && setHoveredPage("prev")}
@@ -118,6 +120,7 @@ const Pagination = ({ currentPage, itemsPerPage, totalData, onPageChange }) => {
           {renderPageNumbers()}
           <li>
             <button
+              type="button"
               onClick={() => handlePageClick(currentPage + 1)}
               disabled={currentPage === totalPages}
               onMouseEnter={() =>

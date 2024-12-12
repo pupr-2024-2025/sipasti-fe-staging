@@ -1,38 +1,36 @@
 import React, { useState } from "react";
 import { TextField } from "@mui/material";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { styled } from "@mui/system";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import "dayjs/locale/zh-cn";
+import dayjs from "dayjs";
 
-// Styling kustom untuk TextField
-const CustomTextField = styled(TextField)({
-  "& .MuiInputBase-root": {
-    backgroundColor: "#f0f0f0",
-    borderRadius: "8px",
-  },
-  "& .MuiInputBase-input": {
-    color: "#333",
-  },
-  "& .MuiOutlinedInput-notchedOutline": {
-    borderColor: "#ccc",
-  },
-});
-
-const Datepicker = ({ label, value, onChange, error, helperText }) => {
+const Datepicker = ({
+  label = "Pilih Tanggal",
+  value,
+  onChange,
+  error,
+  helperText,
+}) => {
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="zh-cn">
       <DatePicker
         label={label}
         value={value}
         onChange={onChange}
         renderInput={(params) => (
-          <CustomTextField
+          <TextField
             {...params}
+            className="bg-surface-light-background text-emphasis-on_surface-high rounded-lg border-surface-light-outline focus:ring-2 focus:ring-solid-blue"
             fullWidth
             variant="outlined"
             error={error}
             helperText={helperText}
-            InputProps={{ ...params.InputProps }}
+            InputProps={{
+              ...params.InputProps,
+              className:
+                "bg-surface-light-background text-emphasis-on_surface-medium",
+            }}
           />
         )}
       />
@@ -57,7 +55,8 @@ const App = () => {
   };
 
   return (
-    <div style={{ width: "300px", margin: "0 auto", paddingTop: "50px" }}>
+    <div>
+      {/* Datepicker */}
       <Datepicker
         label="Pilih Tanggal"
         value={date}
