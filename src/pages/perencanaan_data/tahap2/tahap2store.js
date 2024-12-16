@@ -12,9 +12,6 @@ const useStore = create((set) => ({
   filteredDataMaterial: [],
   rowsToAdd: 0,
   isModalOpen: false,
-  pushMaterial: () => {},
-  pushPeralatan: null,
-  pushTenagaKerja: null,
   setSelectedValue: (value) => set({ selectedValue: value }),
   setProvincesOptions: (options) => set({ provincesOptions: options }),
   setInitialValues: (values) =>
@@ -28,9 +25,31 @@ const useStore = create((set) => ({
   setFilteredDataMaterial: (data) => set({ filteredDataMaterial: data }),
   setRowsToAdd: (rows) => set({ rowsToAdd: rows }),
   setIsModalOpen: (isOpen) => set({ isModalOpen: isOpen }),
-  setPushMaterial: (push) => set({ pushMaterial: push }),
-  setPushPeralatan: (push) => set({ pushPeralatan: push }),
-  setPushTenagaKerja: (push) => set({ pushTenagaKerja: push }),
+
+  // Optimized push functions
+  pushMaterial: (newMaterial) =>
+    set((state) => ({
+      initialValues: {
+        ...state.initialValues,
+        materials: [...state.initialValues.materials, newMaterial],
+      },
+    })),
+
+  pushPeralatan: (newPeralatan) =>
+    set((state) => ({
+      initialValues: {
+        ...state.initialValues,
+        peralatans: [...state.initialValues.peralatans, newPeralatan],
+      },
+    })),
+
+  pushTenagaKerja: (newTenagaKerja) =>
+    set((state) => ({
+      initialValues: {
+        ...state.initialValues,
+        tenagaKerjas: [...state.initialValues.tenagaKerjas, newTenagaKerja],
+      },
+    })),
 }));
 
 export default useStore;

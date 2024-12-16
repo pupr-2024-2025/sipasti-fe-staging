@@ -14,6 +14,8 @@ import { CloseCircle } from "iconsax-react";
 const Tahap4 = ({ onNext, onBack, onClose }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isModalFinalOpen, setIsModalFinalOpen] = useState(false);
+  const [isConfirmModalFinalOpen, setIsConfirmModalFinalOpen] = useState(false);
   const [selectedVendorFinal, setSelectedVendorFinal] = useState(null);
   const [allDataMaterial, setAllDataMaterial] = useState([]);
   const [allDataPeralatan, setAllDataPeralatan] = useState([]);
@@ -49,6 +51,30 @@ const Tahap4 = ({ onNext, onBack, onClose }) => {
       (selectedVendor) => selectedVendor.data_vendor_id === vendorId
     );
   };
+
+  <Modal isOpen={isConfirmModalFinalOpen}>
+    <div className="space-y-4 p-4">
+      <h2 className="text-H5">Peringatan</h2>
+      <p>
+        Dengan menekan tombol simpan Anda tidak dapat melakukan perubahan data
+        kembali.
+      </p>
+      <div className="flex justify-end space-x-4 mt-4">
+        <Button variant="outlined_yellow" size="Medium">
+          Batal
+        </Button>
+        <Button
+          variant="solid_blue"
+          size="Medium"
+          onClick={() => {
+            setIsConfirmModalFinalOpen(false);
+            handleCloseModal();
+          }}>
+          Ya, Cetak
+        </Button>
+      </div>
+    </div>
+  </Modal>;
 
   const handleDeleteAndContinue = () => {
     setIsConfirmModalOpen(true); // Open the confirmation modal
@@ -107,7 +133,56 @@ const Tahap4 = ({ onNext, onBack, onClose }) => {
     });
   };
 
-  console.log("hai", selectedVendors);
+  const saveDataToAPI = async (informasiUmumId) => {
+    try {
+      const response = await fetch(
+        `https://api-ecatalogue-staging.online/api/perencanaan-data/save-perencanaan-data/${informasiUmumId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // Tambahkan data jika diperlukan
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to save data to the API");
+      }
+
+      const result = await response.json();
+      console.log("API Response:", result);
+      return result; // Mengembalikan hasil jika diperlukan
+    } catch (error) {
+      console.error("Error during API call:", error);
+      throw error;
+    }
+  };
+
+  const handleConfirmAndSave = async () => {
+    const informasiUmumId = localStorage.getItem("informasi_umum_id"); // Ambil ID dari localStorage
+
+    if (!informasiUmumId) {
+      alert("ID informasi umum tidak ditemukan. Silakan coba lagi.");
+      return;
+    }
+
+    try {
+      // Kirim request ke API
+      await saveDataToAPI(informasiUmumId);
+
+      // Tutup modal setelah berhasil
+      setIsConfirmModalFinalOpen(false);
+      handleCloseModalFinal();
+      window.location.href = "/perencanaan_data/perencanaan_data_list";
+    } catch (error) {
+      // Tangani error jika API gagal
+      alert("Gagal menyimpan data. Silakan coba lagi.");
+    }
+  };
+
   const [selectedVendorId, setSelectedVendorId] = useState(null);
   const [vendorDetail, setVendorDetail] = useState([]);
   const [dataMaterial, setDataMaterial] = useState([]);
@@ -199,10 +274,18 @@ const Tahap4 = ({ onNext, onBack, onClose }) => {
     setIsModalOpen(true);
   };
 
+  const handleOpenModalFinal = () => {
+    setIsConfirmModalFinalOpen(true);
+  };
+
+  const handleCloseModalFinal = () => {
+    console.log("Modal closed, data saved, or other actions");
+    // Tambahkan logika lain jika diperlukan
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedVendorId(null);
-    // setVendorDetail(null);
     setSelectedVendors([]);
     setDeletedDataMaterial([]);
     setDeletedDataPeralatan([]);
@@ -851,15 +934,36 @@ const Tahap4 = ({ onNext, onBack, onClose }) => {
               <Button
                 variant="solid_blue"
                 size="Medium"
-                onClick={async () => {
-                  try {
-                    onNext();
-                  } catch (error) {
-                    alert(error.message);
-                  }
-                }}>
+                onClick={handleOpenModalFinal} // Membuka modal
+              >
                 Simpan & Lanjut
               </Button>
+
+              {/* Modal */}
+              <Modal isOpen={isConfirmModalFinalOpen}>
+                <div className="space-y-4 p-4">
+                  <h2 className="text-H5">Peringatan</h2>
+                  <p>Anda yakin ingin menyimpan?</p>
+                  <div className="flex justify-end space-x-4 mt-4">
+                    {/* Tombol Batal */}
+                    <Button
+                      variant="outlined_yellow"
+                      size="Medium"
+                      onClick={() => setIsConfirmModalFinalOpen(false)}>
+                      Batal
+                    </Button>
+
+                    {/* Tombol Ya, Cetak */}
+                    <Button
+                      variant="solid_blue"
+                      size="Medium"
+                      onClick={handleConfirmAndSave} // Panggil API dan tutup modal
+                    >
+                      Ya
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
             </div>
           </div>
         </div>

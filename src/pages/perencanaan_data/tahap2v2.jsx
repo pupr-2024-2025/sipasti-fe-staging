@@ -1,5 +1,5 @@
 import { Field, FieldArray, Form, Formik } from "formik";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import useStore from "./tahap2/tahap2store";
 import Navbar from "../../components/navigationbar";
@@ -162,14 +162,9 @@ export default function Tahap2V2() {
             fetchIdentifikasiKebutuhan(identifikasi_kebutuhan_id);
             return;
           }
-        } else {
-          const identifikasi_kebutuhan_id = localStorage.getItem(
-            "identifikasi_kebutuhan_id"
-          );
-          console.error("ganemu", identifikasi_kebutuhan_id);
         }
       } catch (error) {
-        console.error("Error fetching provinces options:", error);
+        // console.error("Error fetching provinces options:", error);
       }
     };
 
@@ -226,14 +221,14 @@ export default function Tahap2V2() {
 
       if (response.status === 200) {
         const identifikasiKebutuhanId =
-          response.data?.data?.materials?.[0]?.identifikasi_kebutuhan_id ?? 0;
+          response.data?.data?.material?.[0]?.identifikasi_kebutuhan_id ?? 0;
 
         console.log("Data berhasil disimpan:", response.data);
         localStorage.setItem(
           "identifikasi_kebutuhan_id",
           identifikasiKebutuhanId
         );
-        // window.location.href = "/perencanaan_data/tahap3v2";
+        // window.location.href = "/perencanaan_data/tahap3";
       }
     } catch (error) {
       // console.error("Error submitting data:", error);
@@ -326,10 +321,12 @@ const MaterialForm = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const paginatedMaterials = values.materials.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedMaterials = useMemo(() => {
+    return values.materials.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [values.materials, currentPage]);
 
   // const {
   //   setInitialValues

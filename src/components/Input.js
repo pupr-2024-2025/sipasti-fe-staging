@@ -16,6 +16,8 @@ const TextInput = ({
   isRequired = false,
   errorMessage = "Wajib diisi",
   labelPosition = "top",
+  spaceClass = "space-x-24",
+  labelMargin = "180px",
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState("");
@@ -62,7 +64,7 @@ const TextInput = ({
         <>
           {label && (
             <label
-              className="text-B2 text-emphasis-on_surface-high w-[180px] block mb-1"
+              className={`text-B2 text-emphasis-on_surface-high h-8 min-w-[180px] mr-2 flex items-center ${labelMargin}`}
               style={{ whiteSpace: "nowrap" }}>
               {label}
               {isRequired && (
@@ -123,11 +125,16 @@ const TextInput = ({
         </>
       ) : (
         <div className="flex flex-col">
-          <div className="flex items-center space-x-12">
+          <div className={`flex items-center ${spaceClass}`}>
             {label && (
+              //! If you read this, somehow margin nya harus di set manual di style gak bisa pake class dari tailwind
               <label
                 className="text-B2 text-emphasis-on_surface-high h-8 min-w-[180px] mr-2 flex items-center"
-                style={{ whiteSpace: "nowrap" }}>
+                style={{
+                  whiteSpace: "nowrap",
+                  marginRight: labelMargin,
+                }}>
+                {/* // style={{ whiteSpace: "nowrap" }}> */}
                 {label}
                 {isRequired && (
                   <span className="text-custom-red-500 ml-1">*</span>

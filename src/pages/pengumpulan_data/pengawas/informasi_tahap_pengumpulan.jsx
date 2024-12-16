@@ -15,6 +15,7 @@ export default function informasi_tahap_pengumpulan() {
   const { vendor = [] } = informasi_tahap_pengumpulanStore(
     (state) => state.initialValues
   );
+  const fetchPDF = informasi_tahap_pengumpulanStore((state) => state.fetchPDF);
   const { fetchVendor } = informasi_tahap_pengumpulanStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [currentModal, setCurrentModal] = useState(1);
@@ -80,6 +81,20 @@ export default function informasi_tahap_pengumpulan() {
   useEffect(() => {
     setFilteredVendor(vendor);
   }, [vendor]);
+
+  const handleLinkClick = async (shortlist_id) => {
+    if (!shortlist_id) {
+      alert("ID Shortlist tidak ditemukan.");
+      console.error("Shortlist ID is null or undefined");
+      return;
+    }
+    const urlKuisioner = await fetchPDF(shortlist_id);
+    if (urlKuisioner) {
+      window.open(urlKuisioner, "_blank");
+    } else {
+      alert("Gagal mendapatkan link kuisioner. Silakan coba lagi.");
+    }
+  };
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -291,7 +306,7 @@ export default function informasi_tahap_pengumpulan() {
                           <td className="px-3 py-6 justify-center content-center">
                             <button
                               className={`w-[52px] h-[52px] rounded-full flex items-center justify-center transition-colors 
-        hover:bg-custom-blue-50 cursor-pointer`}
+                         hover:bg-custom-blue-50 cursor-pointer`}
                               onClick={(e) =>
                                 handleToggleVendorMenu(item.id, e)
                               }>
@@ -300,6 +315,39 @@ export default function informasi_tahap_pengumpulan() {
                                 color={colors.Emphasis.Light.On_Surface.High}
                               />
                             </button>
+                            {activeVendorMenu === item.id && (
+                              <div
+                                className="absolute bg-white rounded-[12px] mr-[12px] shadow-lg p-2 w-56"
+                                style={{
+                                  // top: `${menuPosition.top}px`,
+                                  left: "705px",
+                                  right: menuPosition.alignRight
+                                    ? 0
+                                    : undefined,
+                                  zIndex: 10000,
+                                  boxShadow:
+                                    "0px 4px 16px 0px rgba(165, 163, 174, 0.45)",
+                                }}>
+                                <Link
+                                  href="#"
+                                  className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200"
+                                  onClick={() =>
+                                    handleLinkClick(item.shortlist_id)
+                                  }>
+                                  Link Kuesioner
+                                </Link>
+                                <Link
+                                  href="/pengumpulan_data/pengolah_data/entri_data/"
+                                  className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200">
+                                  Entri Data
+                                </Link>
+                                <Link
+                                  href="#"
+                                  className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200">
+                                  Pemeriksaan
+                                </Link>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))
@@ -343,38 +391,6 @@ export default function informasi_tahap_pengumpulan() {
             className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200"
             onClick={() => openModal(activeMenu)}>
             Lihat Detail Kuesioner
-          </Link>
-        </div>
-      )}
-
-      {activeVendorMenu === vendor.id && (
-        <div
-          className="absolute bg-white rounded-[12px] mr-[12px] shadow-lg p-2 w-56"
-          style={{
-            top: menuPosition.top,
-            left: menuPosition.alignRight ? undefined : menuPosition.left,
-            right: menuPosition.alignRight ? 0 : undefined,
-            zIndex: 10000,
-            boxShadow: "0px 4px 16px 0px rgba(165, 163, 174, 0.45)",
-          }}>
-          <Link
-            href="#"
-            className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200"
-            // onClick={() => openModal(activeMenu)}
-          >
-            Link Kuesioner
-          </Link>
-          <Link
-            href="/pengumpulan_data/pengolah_data/entri_data/"
-            className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200">
-            Entri Data
-          </Link>
-          <Link
-            href="#"
-            className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200"
-            // onClick={() => openModal(activeMenu)}
-          >
-            Pemeriksaan
           </Link>
         </div>
       )}

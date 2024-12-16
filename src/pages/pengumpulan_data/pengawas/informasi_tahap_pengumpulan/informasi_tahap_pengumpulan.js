@@ -46,6 +46,24 @@ const informasi_tahap_pengumpulanStore = create((set) => ({
       console.error("Terjadi kesalahan saat mengambil data:", error.message);
     }
   },
+  fetchPDF: async (shortlist_id) => {
+    try {
+      const response = await axios.get(
+        `https://api-ecatalogue-staging.online/api/pengumpulan-data/view-pdf-kuisioner/${shortlist_id}`
+      );
+
+      const { data } = response;
+      if (data.status === "success" && data.data?.url_kuisioner) {
+        return data.data.url_kuisioner;
+      } else {
+        console.error("Gagal mendapatkan data:", data.message);
+        return null;
+      }
+    } catch (error) {
+      console.error("Terjadi kesalahan saat mengambil data:", error.message);
+      return null;
+    }
+  },
 }));
 
 export default informasi_tahap_pengumpulanStore;
