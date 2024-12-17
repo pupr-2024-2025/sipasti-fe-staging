@@ -4,6 +4,7 @@ import axios from "axios";
 const entri_dataStore = create((set) => ({
   selectedValue: 0,
   userOptions: [],
+  pengawasUserOptions: [],
   initialValues: {
     petugas_lapangan: "",
     tanggal_survei: "",
@@ -46,6 +47,26 @@ const entri_dataStore = create((set) => ({
           label: user.nama_lengkap,
         })) || [];
       set({ userOptions: options });
+      console.log("User options berhasil diambil:", options);
+    } catch (error) {
+      console.error(
+        "Error fetching user options:",
+        error.response?.data || error.message
+      );
+    }
+  },
+  fetchPengawasUserOptions: async () => {
+    try {
+      const response = await axios.get(
+        "https://api-ecatalogue-staging.online/api/pengumpulan-data/list-pengawas"
+      );
+      const options =
+        response.data?.data.map((user) => ({
+          value: user.user_id,
+          label: user.nama_lengkap,
+          nrp: user.nrp,
+        })) || [];
+      set({ pengawasUserOptions: options });
       console.log("User options berhasil diambil:", options);
     } catch (error) {
       console.error(

@@ -17,6 +17,8 @@ export default function EntriData() {
   const {
     selectedValue,
     userOptions,
+    pengawasUserOptions,
+    fetchPengawasUserOptions,
     fetchUserOptions,
     initialValues,
     materials,
@@ -31,6 +33,10 @@ export default function EntriData() {
   useEffect(() => {
     fetchUserOptions();
   }, [fetchUserOptions]);
+
+  useEffect(() => {
+    fetchPengawasUserOptions();
+  }, [fetchPengawasUserOptions]);
 
   const handleSubmit = async (values) => {
     console.log("Values sebelum validasi:", values);
@@ -156,7 +162,7 @@ export default function EntriData() {
             labelPosition="left"
             placeholder="Masukkan Nama Pengawas"
             isRequired={true}
-            options={userOptions}
+            options={pengawasUserOptions}
             onSelect={(selectedOption) =>
               setFieldValue("pengawas_lapangan", selectedOption.value)
             }
@@ -1176,7 +1182,7 @@ export default function EntriData() {
             <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
               {/* Dropdown for Nama Pemberi Informasi */}
               {/* ini kl bisa style manual harusnya soalnya aku gak nemu ini styling nya di mana*/}
-              <Field
+              {/* <Field
                 as={Dropdown}
                 name="petugasLapangan"
                 label="Nama Pemberi Informasi/Jabatan"
@@ -1189,8 +1195,17 @@ export default function EntriData() {
                 }
                 size="Medium"
                 errorMessage="Nama Pemberi Informasi/Jabatan tidak boleh kosong"
+              /> */}
+              <TextInput
+                label="ama Pemberi Informasi/Jabatan"
+                labelPosition="left"
+                placeholder="Masukkan Nama Pemberi Informasi/Jabatan"
+                isRequired={true}
+                size="Medium"
+                errorMessage="Nama Pemberi Informasi/Jabatan tidak boleh kosong"
+                value={values.nip_pengawas || ""}
+                onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
               />
-
               {/* Datepicker for Tanggal Survei */}
               <div
                 style={{

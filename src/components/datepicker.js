@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { TextField } from "@mui/material";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import "dayjs/locale/zh-cn";
 import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
 
 const Datepicker = ({
   label = "Pilih Tanggal",
@@ -13,11 +13,12 @@ const Datepicker = ({
   helperText,
 }) => {
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="zh-cn">
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="id">
       <DatePicker
         label={label}
         value={value}
         onChange={onChange}
+        inputFormat="YYYY/MM/DD" // Format eksplisit
         renderInput={(params) => (
           <TextField
             {...params}
