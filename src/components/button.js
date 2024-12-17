@@ -5,10 +5,11 @@ const Button = ({
   size = "Medium",
   variant = "solid_blue",
   onClick,
-  disabled = false, // Default value for disabled is set to false
+  disabled = false,
   className = "",
   iconLeft = null,
   iconRight = null,
+  type = "button",
 }) => {
   const sizes = {
     ExtraSmall: className?.includes("custom-padding")
@@ -29,26 +30,33 @@ const Button = ({
   };
 
   const variants = {
-    solid_blue: "bg-custom-blue-500 text-emphasis-on_color-high hover:bg-custom-blue-600 active:bg-custom-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700",
-    solid_yellow: "bg-custom-yellow-500 text-emphasis-on_color-high hover:bg-custom-yellow-600 active:bg-custom-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-700",
-    outlined_blue: "ring-2 ring-custom-blue-500 text-custom-blue-500 hover:bg-custom-blue-600/10 active:bg-custom-blue-700/1 focus:outline-none focus:ring-2 focus:ring-blue-700",
-    outlined_yellow: "ring-2 ring-custom-yellow-500 text-custom-yellow-500 hover:bg-custom-yellow-600/10 active:bg-custom-yellow-700/1 focus:outline-none focus:ring-2 focus:ring-yellow-700",
-    blue_text: "text-custom-blue-500 hover:text-custom-blue-600 active:text-custom-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700",
-    red_text: "text-custom-red-500 hover:text-custom-red-600 active:text-custom-red-700 focus:outline-none focus:ring-2 focus:ring-red-700",
-    outlined_icon: 
-    "ring-2 ring-custom-blue-500 text-custom-blue-500 hover:bg-custom-blue-500/10 active:bg-custom-blue-700/20 focus:outline-none focus:ring-2 focus:ring-blue-700 flex justify-center items-center rounded-full h-10 w-10",
+    solid_blue:
+      "bg-custom-blue-500 text-emphasis-on_color-high hover:bg-custom-blue-600 active:bg-custom-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700",
+    solid_yellow:
+      "bg-custom-yellow-500 text-emphasis-on_color-high hover:bg-custom-yellow-600 active:bg-custom-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-700",
+    outlined_blue:
+      "ring-2 ring-custom-blue-500 text-custom-blue-500 hover:bg-custom-blue-600/10 active:bg-custom-blue-700/1 focus:outline-none focus:ring-2 focus:ring-blue-700",
+    outlined_yellow:
+      "ring-2 ring-custom-yellow-500 text-custom-yellow-500 hover:bg-custom-yellow-600/10 active:bg-custom-yellow-700/1 focus:outline-none focus:ring-2 focus:ring-yellow-700",
+    blue_text:
+      "text-custom-blue-500 hover:text-custom-blue-600 active:text-custom-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700",
+    red_text:
+      "text-custom-red-500 hover:text-custom-red-600 active:text-custom-red-700 focus:outline-none focus:ring-2 focus:ring-red-700",
+    outlined_icon:
+      "ring-2 ring-custom-blue-500 text-custom-blue-500 hover:bg-custom-blue-500/10 active:bg-custom-blue-700/20 focus:outline-none focus:ring-2 focus:ring-blue-700 flex justify-center items-center rounded-full h-10 w-10",
     disabled: "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50",
   };
 
   return (
     <button
-      type="button"
-      disabled={disabled} // Ensure the disabled prop is used correctly
+      type={type}
+      disabled={disabled}
       onClick={onClick}
-      className={`${sizes[size]} ${disabled ? variants["disabled"] : variants[variant]} 
-      flex justify-center items-center transition-all duration-200 ease-in-out ${className}`}
-    >
-      {iconLeft && <span>{iconLeft}</span>} 
+      className={`${sizes[size]} ${
+        disabled ? variants["disabled"] : variants[variant]
+      } 
+      flex justify-center items-center transition-all duration-200 ease-in-out ${className}`}>
+      {iconLeft && <span>{iconLeft}</span>}
       {children}
       {iconRight && <span>{iconRight}</span>}
     </button>

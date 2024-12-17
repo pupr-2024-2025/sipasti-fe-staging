@@ -5,6 +5,10 @@ const entri_dataStore = create((set) => ({
   selectedValue: 0,
   userOptions: [],
   initialValues: {
+    petugas_lapangan: "",
+    tanggal_survei: "",
+    nip: "",
+    nip_pengawas: "",
     materials: [],
     peralatans: [],
     tenaga_Kerjas: [],

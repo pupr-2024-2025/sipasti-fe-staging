@@ -11,14 +11,11 @@ import Button from "../../../components/button";
 import Dropdown from "../../../components/dropdown";
 
 export default function EntriData() {
-  // const { userOptions, fetchUserOptions } = useStore(entri_dataStore);
-  // const { materials } = useStore(entri_dataStore);
-  // const { dataEntri, fetchData } = entri_dataStore();
   const [date, setDate] = useState(null);
   const [error, setError] = useState(false);
   const [helperText, setHelperText] = useState("");
-  // const { setSelectedValue } = entri_dataStore();
   const {
+    selectedValue,
     userOptions,
     fetchUserOptions,
     initialValues,
@@ -28,6 +25,7 @@ export default function EntriData() {
     dataEntri,
     fetchData,
     setSelectedValue,
+    a,
   } = useStore(entri_dataStore);
 
   useEffect(() => {
@@ -35,23 +33,165 @@ export default function EntriData() {
   }, [fetchUserOptions]);
 
   const handleSubmit = async (values) => {
-    // const
+    console.log("Values sebelum validasi:", values);
+    if (!values.tanggal_survei) {
+      alert("Tanggal survei wajib diisi!");
+      return;
+    }
+
+    const informasiUmumId = localStorage.getItem("informasi_umum_id");
+
+    const material = values?.materials || [];
+    const peralatan = values?.peralatans || [];
+    const tenagaKerja = values?.tenagaKerjas || [];
+
+    const requestData = {
+      informasi_umum_id: informasiUmumId,
+      tanggal_survei: dayjs(values.tanggal_survei).format("YYYY-MM-DD"),
+      material,
+      peralatan,
+      tenaga_kerja: tenagaKerja,
+    };
+
+    console.log("Data yang akan dikirim ke API:", requestData);
+
+    try {
+      const response = await axios.post(
+        "https://api-ecatalogue-staging.online/api/pengumpulan-data/store-entri-data",
+        requestData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Response dari API:", response.data);
+
+      if (response.status === 200) {
+        const identifikasiKebutuhanId =
+          response.data?.data?.material?.[0]?.identifikasi_kebutuhan_id ?? 0;
+
+        localStorage.setItem(
+          "identifikasi_kebutuhan_id",
+          identifikasiKebutuhanId
+        );
+      }
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      alert("Gagal menyimpan data. Silakan coba lagi.");
+    }
+
+    console.log("Data berhasil disimpan ke state:", values);
   };
 
   const handleDateChange = (newDate) => {
+    console.log("Tanggal yang dipilih di DatePicker:", newDate);
     if (!newDate) {
       setError(true);
       setHelperText("Tanggal harus diisi");
     } else {
       setError(false);
       setHelperText("");
+      setFieldValue("tanggal_survei", newDate);
     }
-    setDate(newDate);
   };
 
   useEffect(() => {
     fetchData(136);
   }, [fetchData]);
+
+  const PetugasLapanganForm = ({ values, setFieldValue }) => {
+    return (
+      <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
+        <div className="space-y-4">
+          <Field
+            as={Dropdown}
+            name="petugas_lapangan"
+            label="Nama Petugas Lapangan"
+            labelPosition="left"
+            placeholder="Masukkan Petugas Lapangan"
+            isRequired={true}
+            options={userOptions}
+            onSelect={(selectedOption) =>
+              setFieldValue("petugas_lapangan", selectedOption.value)
+            }
+            size="Medium"
+            errorMessage="Nama Petugas Lapangan tidak boleh kosong"
+          />
+          <TextInput
+            label="NIP"
+            labelPosition="left"
+            placeholder="Masukkan NIP Petugas Lapangan"
+            isRequired={true}
+            size="Medium"
+            errorMessage="NIP tidak boleh kosong"
+            value={values.nip || ""}
+            onChange={(e) => setFieldValue("nip", e.target.value)}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "352px",
+            }}>
+            <div className="text-B2">Tanggal Survei</div>
+            <Datepicker
+              label="Tanggal Survei"
+              value={
+                values.tanggal_survei ? dayjs(values.tanggal_survei) : null
+              }
+              onChange={(date) => {
+                setFieldValue("tanggal_survei", date);
+                handleDateChange(date);
+              }}
+              error={error}
+              helperText={helperText}
+            />
+          </div>
+          <Field
+            as={Dropdown}
+            name="pengawas_lapangan"
+            label="Nama Pengawas"
+            labelPosition="left"
+            placeholder="Masukkan Nama Pengawas"
+            isRequired={true}
+            options={userOptions}
+            onSelect={(selectedOption) =>
+              setFieldValue("pengawas_lapangan", selectedOption.value)
+            }
+            size="Medium"
+            errorMessage="Nama Pengawas tidak boleh kosong"
+          />
+          <TextInput
+            label="NIP Pengawas"
+            labelPosition="left"
+            placeholder="Masukkan NIP Pengawas"
+            isRequired={true}
+            size="Medium"
+            errorMessage="NIP pengawas tidak boleh kosong"
+            value={values.nip_pengawas || ""}
+            onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "300px",
+            }}>
+            <div className="text-B2">Tanggal Pengawasan</div>
+            <Datepicker
+              label="Tanggal Pengawasan"
+              value={values.tanggal_pengawasan || ""}
+              onChange={(date) => setFieldValue("tanggal_pengawasan", date)}
+              error={false}
+              helperText=""
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const MaterialForm = ({ hide }) => {
     const [currentPage, setCurrentPage] = useState(1);
@@ -1075,38 +1215,39 @@ export default function EntriData() {
       <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
         Blok IV: Keterangan Pemberi Informasi
       </h4>
-      <Formik
-        initialValues={initialValues}
-        onSubmit={(values) => {
-          console.log(values); // This will log the form values when submitted
-          handleSubmit(values); // You can still call your original handleSubmit function
-        }}>
+      <Formik initialValues={initialValues} onSubmit={handleSubmit}>
         {({ values, setFieldValue }) => (
           <Form>
+            <PetugasLapanganForm
+              values={values}
+              setFieldValue={setFieldValue}
+            />
             <MaterialForm
               values={values}
               setFieldValue={setFieldValue}
-              hide={false}
+              hide={selectedValue !== 0}
               provincesOptions={[]}
               kelompokMaterialOptions={[]}
             />
             <PeralatanForm
               values={values}
               setFieldValue={setFieldValue}
-              hide={false}
+              hide={selectedValue !== 1}
             />
             <TenagaKerjaForm
               values={values}
               setFieldValue={setFieldValue}
-              hide={false}
+              hide={selectedValue !== 2}
             />
-            <Button
-              variant="solid_blue"
-              size="Medium"
-              onClick={() => handleSubmit(values)} // This still triggers the submit
-            >
-              Simpan
-            </Button>
+            <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
+              <Button variant="solid_yellow" size="Medium">
+                Simpan Sebagai Draft
+              </Button>
+
+              <Button variant="solid_blue" size="Medium" type="submit">
+                Simpan
+              </Button>
+            </div>
           </Form>
         )}
       </Formik>

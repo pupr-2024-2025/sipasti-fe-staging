@@ -332,7 +332,7 @@ const Tahap1 = () => {
 
       const isSubmitSuccessful = await handleSubmit(type);
       if (isSubmitSuccessful) {
-        router.replace("/perencanaan_data/tahap2v2");
+        router.replace("/perencanaan_data/tahap2");
       }
     } catch (error) {
       console.error("Submission failed:", error);
