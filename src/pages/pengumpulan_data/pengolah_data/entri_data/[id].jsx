@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import { Field, FieldArray, Form, Formik } from "formik";
 import { useStore } from "zustand";
-import Navbar from "../../../components/navigationbar";
-import TextInput from "../../../components/input";
-import entri_dataStore from "./entri_data/entri_data";
-import informasi_tahap_pengumpulanStore from "../pengawas/informasi_tahap_pengumpulan/informasi_tahap_pengumpulan";
-import Datepicker from "../../../components/datepicker";
-import SearchBox from "../../../components/searchbox";
-import Button from "../../../components/button";
-import Dropdown from "../../../components/dropdown";
+import Navbar from "../../../../components/navigationbar";
+import CustomAlert from "../../../../components/alert";
+import TextInput from "../../../../components/input";
+import entri_dataStore from "../entri_data_store/entri_data";
+import informasi_tahap_pengumpulanStore from "../../pengawas/informasi_tahap_pengumpulan/informasi_tahap_pengumpulan";
+import SearchBox from "../../../../components/searchbox";
+import Button from "../../../../components/button";
+import Dropdown from "../../../../components/dropdown";
+import dayjs from "dayjs";
+import { useRouter } from "next/router";
+import axios from "axios";
+
+import "dayjs/locale/id";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers";
+
+dayjs.locale("id");
 
 export default function EntriData() {
   const [date, setDate] = useState(null);
@@ -21,14 +31,18 @@ export default function EntriData() {
     fetchPengawasUserOptions,
     fetchUserOptions,
     initialValues,
-    materials,
-    peralatans,
-    tenaga_Kerjas,
+    material,
+    peralatan,
+    tenaga_kerja,
     dataEntri,
     fetchData,
     setSelectedValue,
-    a,
+    data_vendor_id,
+    identifikasi_kebutuhan_id,
   } = useStore(entri_dataStore);
+
+  const router = useRouter();
+  const { id } = router.query;
 
   useEffect(() => {
     fetchUserOptions();
@@ -38,33 +52,90 @@ export default function EntriData() {
     fetchPengawasUserOptions();
   }, [fetchPengawasUserOptions]);
 
+  const [alertInfo, setAlertInfo] = useState({
+    open: false,
+    severity: "info",
+    message: "",
+  });
+
+  const handleAlertClose = () => {
+    setAlertInfo((prev) => ({ ...prev, open: false }));
+  };
+
+  const validateFields = (values) => {
+    if (!values.tanggal_survei) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Tanggal survei wajib diisi!",
+      });
+      return false;
+    }
+    if (!values.user_id_petugas_lapangan) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Petugas lapangan wajib diisi!",
+      });
+      return false;
+    }
+    if (!values.user_id_pengawas) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Pengawas wajib diisi!",
+      });
+      return false;
+    }
+    if (!values.nama_pemberi_informasi) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Nama pemberi informasi wajib diisi!",
+      });
+      return false;
+    }
+    // if (values.material.length === 0) {
+    //   setAlertInfo({
+    //     open: true,
+    //     severity: "error",
+    //     message: "Material wajib diisi minimal satu item!",
+    //   });
+    //   return false;
+    // }
+    // if (values.peralatan.length === 0) {
+    //   setAlertInfo({
+    //     open: true,
+    //     severity: "error",
+    //     message: "Peralatan wajib diisi minimal satu item!",
+    //   });
+    //   return false;
+    // }
+    // if (values.tenaga_kerja.length === 0) {
+    //   setAlertInfo({
+    //     open: true,
+    //     severity: "error",
+    //     message: "Tenaga kerja wajib diisi minimal satu item!",
+    //   });
+    //   return false;
+    // }
+    return true;
+  };
+
   const handleSubmit = async (values) => {
     console.log("Values sebelum validasi:", values);
-    if (!values.tanggal_survei) {
-      alert("Tanggal survei wajib diisi!");
+    if (!validateFields(values)) {
       return;
     }
-
-    const informasiUmumId = localStorage.getItem("informasi_umum_id");
-
-    const material = values?.materials || [];
-    const peralatan = values?.peralatans || [];
-    const tenagaKerja = values?.tenagaKerjas || [];
-
-    const requestData = {
-      informasi_umum_id: informasiUmumId,
-      tanggal_survei: dayjs(values.tanggal_survei).format("YYYY-MM-DD"),
-      material,
-      peralatan,
-      tenaga_kerja: tenagaKerja,
-    };
-
-    console.log("Data yang akan dikirim ke API:", requestData);
 
     try {
       const response = await axios.post(
         "https://api-ecatalogue-staging.online/api/pengumpulan-data/store-entri-data",
-        requestData,
+        {
+          ...values,
+          data_vendor_id,
+          identifikasi_kebutuhan_id,
+        },
         {
           headers: {
             "Content-Type": "application/json",
@@ -82,10 +153,28 @@ export default function EntriData() {
           "identifikasi_kebutuhan_id",
           identifikasiKebutuhanId
         );
+
+        setAlertInfo({
+          open: true,
+          severity: "success",
+          message: "Data berhasil disimpan!",
+        });
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       }
     } catch (error) {
       console.error("Error submitting data:", error);
-      alert("Gagal menyimpan data. Silakan coba lagi.");
+
+      const errorMessage =
+        error.response?.data?.message ??
+        "Gagal menyimpan data. Silakan coba lagi.";
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: errorMessage,
+      });
     }
 
     console.log("Data berhasil disimpan ke state:", values);
@@ -104,98 +193,176 @@ export default function EntriData() {
   };
 
   useEffect(() => {
-    fetchData(136);
-  }, [fetchData]);
+    if (id) {
+      console.log("shortlist_id yang dikirim:", id);
+      fetchData(id);
+    }
+  }, [id, fetchData]);
 
-  const PetugasLapanganForm = ({ values, setFieldValue }) => {
+  // useEffect(() => {
+  //   fetchData(136);
+  // }, [fetchData]);
+
+  const PemberiInformasiForm = ({ values, setFieldValue }) => {
     return (
-      <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-        <div className="space-y-4">
-          <Field
-            as={Dropdown}
-            name="petugas_lapangan"
-            label="Nama Petugas Lapangan"
-            labelPosition="left"
-            placeholder="Masukkan Petugas Lapangan"
-            isRequired={true}
-            options={userOptions}
-            onSelect={(selectedOption) =>
-              setFieldValue("petugas_lapangan", selectedOption.value)
-            }
-            size="Medium"
-            errorMessage="Nama Petugas Lapangan tidak boleh kosong"
-          />
-          <TextInput
-            label="NIP"
-            labelPosition="left"
-            placeholder="Masukkan NIP Petugas Lapangan"
-            isRequired={true}
-            size="Medium"
-            errorMessage="NIP tidak boleh kosong"
-            value={values.nip || ""}
-            onChange={(e) => setFieldValue("nip", e.target.value)}
-          />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "352px",
-            }}>
-            <div className="text-B2">Tanggal Survei</div>
-            <Datepicker
-              label="Tanggal Survei"
-              value={
-                values.tanggal_survei ? dayjs(values.tanggal_survei) : null
+      <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
+        <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
+          <div className=" space-y-8">
+            <TextInput
+              label="Nama Pemberi Informasi / Jabatan"
+              labelPosition="left"
+              placeholder="Masukkan Nama Pemberi Informasi / Jabatan"
+              isRequired={true}
+              size="Medium"
+              errorMessage="Nama pemberi informasi / jabatan tidak boleh kosong"
+              value={values.nama_pemberi_informasi || ""}
+              onChange={(e) =>
+                setFieldValue("nama_pemberi_informasi", e.target.value)
               }
-              onChange={(date) => {
-                setFieldValue("tanggal_survei", date);
-                handleDateChange(date);
-              }}
-              error={error}
-              helperText={helperText}
             />
-          </div>
-          <Field
-            as={Dropdown}
-            name="pengawas_lapangan"
-            label="Nama Pengawas"
-            labelPosition="left"
-            placeholder="Masukkan Nama Pengawas"
-            isRequired={true}
-            options={pengawasUserOptions}
-            onSelect={(selectedOption) =>
-              setFieldValue("pengawas_lapangan", selectedOption.value)
-            }
-            size="Medium"
-            errorMessage="Nama Pengawas tidak boleh kosong"
-          />
-          <TextInput
-            label="NIP Pengawas"
-            labelPosition="left"
-            placeholder="Masukkan NIP Pengawas"
-            isRequired={true}
-            size="Medium"
-            errorMessage="NIP pengawas tidak boleh kosong"
-            value={values.nip_pengawas || ""}
-            onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
-          />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "300px",
-            }}>
-            <div className="text-B2">Tanggal Pengawasan</div>
-            <Datepicker
-              label="Tanggal Pengawasan"
-              value={values.tanggal_pengawasan || ""}
-              onChange={(date) => setFieldValue("tanggal_pengawasan", date)}
-              error={false}
-              helperText=""
+            <TextInput
+              label="Tanda Tangan Responden"
+              labelPosition="left"
+              placeholder="Tanda Tangan Responden"
+              // isRequired={true}
+              size="Medium"
+              errorMessage="Tanda tangan responden tidak boleh kosong"
+              // value={values.nip_pengawas || ""}
+              onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
             />
           </div>
         </div>
-      </div>
+      </LocalizationProvider>
+    );
+  };
+
+  const PetugasLapanganForm = ({ values, setFieldValue }) => {
+    return (
+      <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
+        <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
+          <div className=" space-y-8">
+            <Field
+              as={Dropdown}
+              name="user_id_petugas_lapangan"
+              label="Nama Petugas Lapangan"
+              labelPosition="left"
+              placeholder="Masukkan Petugas Lapangan"
+              isRequired={true}
+              options={userOptions}
+              onSelect={(selectedOption) =>
+                setFieldValue("user_id_petugas_lapangan", selectedOption.value)
+              }
+              size="Medium"
+              errorMessage="Nama Petugas Lapangan tidak boleh kosong"
+            />
+            <TextInput
+              label="NIP"
+              labelPosition="left"
+              placeholder="Masukkan NIP Petugas Lapangan"
+              // isRequired={true}
+              size="Medium"
+              errorMessage="NIP tidak boleh kosong"
+              // value={values.nip || ""}
+              onChange={(e) => setFieldValue("nip", e.target.value)}
+            />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "256px",
+              }}>
+              <div className="text-B2" style={{ minWidth: "200px" }}>
+                Tanggal Survei
+              </div>
+              <DatePicker
+                label="Tanggal Survei"
+                value={
+                  values.tanggal_survei
+                    ? dayjs(values.tanggal_survei, "DD-MM-YYYY")
+                    : null
+                }
+                onChange={(date) => {
+                  const formattedDate = date.format("DD-MM-YYYY");
+                  setFieldValue("tanggal_survei", formattedDate);
+                  console.log("Tanggal survei yang dipilih:", formattedDate);
+                }}
+                slotProps={{
+                  textField: {
+                    error,
+                    helperText: error ? "Tanggal harus diisi" : "",
+                    fullWidth: true,
+                  },
+                }}
+                localeText={{
+                  cancelButtonLabel: "Batal",
+                  okButtonLabel: "Pilih",
+                }}
+              />
+            </div>
+            <Field
+              as={Dropdown}
+              name="user_id_pengawas"
+              label="Nama Pengawas"
+              labelPosition="left"
+              placeholder="Masukkan Nama Pengawas"
+              isRequired={true}
+              options={pengawasUserOptions}
+              onSelect={(selectedOption) =>
+                setFieldValue("user_id_pengawas", selectedOption.value)
+              }
+              size="Medium"
+              errorMessage="Nama Pengawas tidak boleh kosong"
+            />
+            <TextInput
+              label="NIP Pengawas"
+              labelPosition="left"
+              placeholder="Masukkan NIP Pengawas"
+              // isRequired={true}
+              size="Medium"
+              errorMessage="NIP pengawas tidak boleh kosong"
+              // value={values.nip_pengawas || ""}
+              onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
+            />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "256px",
+              }}>
+              <div className="text-B2" style={{ minWidth: "200px" }}>
+                Tanggal Pengawasan
+              </div>
+              <DatePicker
+                label="Tanggal Pengawasan"
+                value={
+                  values.tanggal_pengawasan
+                    ? dayjs(values.tanggal_pengawasan, "DD-MM-YYYY")
+                    : null
+                }
+                onChange={(date) => {
+                  const formattedDate = date.format("DD-MM-YYYY");
+                  setFieldValue("tanggal_pengawasan", formattedDate);
+                  console.log(
+                    "Tanggal Pengawasan yang dipilih:",
+                    formattedDate
+                  );
+                }}
+                slotProps={{
+                  textField: {
+                    error,
+                    helperText: error ? "Tanggal harus diisi" : "",
+                    fullWidth: true,
+                  },
+                }}
+                localeText={{
+                  cancelButtonLabel: "Batal",
+                  okButtonLabel: "Pilih",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </LocalizationProvider>
     );
   };
 
@@ -203,15 +370,15 @@ export default function EntriData() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    const paginatedMaterials =
-      materials?.slice(
+    const paginatedMaterial =
+      material?.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
       ) || [];
 
     return (
       <div className={`${hide ? "hidden" : ""}`}>
-        <FieldArray name="materials">
+        <FieldArray name="material">
           {({ push, remove }) => (
             <div className="mt-6">
               <div className="flex flex-row justify-between items-center">
@@ -298,7 +465,7 @@ export default function EntriData() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedMaterials.map((item, index) => (
+                      {paginatedMaterial.map((item, index) => (
                         <tr
                           key={item.id}
                           className={`${
@@ -334,21 +501,25 @@ export default function EntriData() {
                             {item.cities_id}
                           </td>
                           <td className="px-3 py-6">
-                            <Field name={`materials.${index}.satuan_setempat`}>
+                            <Field name={`material.${index}.satuan_setempat`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
-                                  onChange={(e) =>
+                                  onChange={(e) => {
                                     form.setFieldValue(
-                                      `materials.${index}.satuan_setempat`,
+                                      `material.${index}.satuan_setempat`,
                                       e.target.value
-                                    )
-                                  }
+                                    );
+                                    form.setFieldValue(
+                                      `material.${index}.id`,
+                                      item.id
+                                    );
+                                  }}
                                   placeholder="Satuan Setempat"
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
+                                    form.errors?.material?.[index]
                                       ?.satuan_setempat
                                   }
                                 />
@@ -357,13 +528,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`materials.${index}.satuan_setempat_panjang`}>
+                              name={`material.${index}.satuan_setempat_panjang`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.satuan_setempat_panjang`,
+                                      `material.${index}.satuan_setempat_panjang`,
                                       e.target.value
                                     )
                                   }
@@ -371,7 +542,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
+                                    form.errors?.material?.[index]
                                       ?.satuan_setempat_panjang
                                   }
                                 />
@@ -380,13 +551,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`materials.${index}.satuan_setempat_lebar`}>
+                              name={`material.${index}.satuan_setempat_lebar`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.satuan_setempat_lebar`,
+                                      `material.${index}.satuan_setempat_lebar`,
                                       e.target.value
                                     )
                                   }
@@ -394,7 +565,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
+                                    form.errors?.material?.[index]
                                       ?.satuan_setempat_lebar
                                   }
                                 />
@@ -403,13 +574,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`materials.${index}.satuan_setempat_tinggi`}>
+                              name={`material.${index}.satuan_setempat_tinggi`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.satuan_setempat_tinggi`,
+                                      `material.${index}.satuan_setempat_tinggi`,
                                       e.target.value
                                     )
                                   }
@@ -417,7 +588,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
+                                    form.errors?.material?.[index]
                                       ?.satuan_setempat_tinggi
                                   }
                                 />
@@ -426,13 +597,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`materials.${index}.konversi_satuan_setempat`}>
+                              name={`material.${index}.konversi_satuan_setempat`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.konversi_satuan_setempat`,
+                                      `material.${index}.konversi_satuan_setempat`,
                                       e.target.value
                                     )
                                   }
@@ -440,7 +611,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
+                                    form.errors?.material?.[index]
                                       ?.konversi_satuan_setempat
                                   }
                                 />
@@ -449,13 +620,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`materials.${index}.harga_satuan_setempat`}>
+                              name={`material.${index}.harga_satuan_setempat`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.harga_satuan_setempat`,
+                                      `material.${index}.harga_satuan_setempat`,
                                       e.target.value
                                     )
                                   }
@@ -463,7 +634,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
+                                    form.errors?.material?.[index]
                                       ?.harga_satuan_setempat
                                   }
                                 />
@@ -472,13 +643,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`materials.${index}.harga_konversi_satuan_setempat`}>
+                              name={`material.${index}.harga_konversi_satuan_setempat`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.harga_konversi_satuan_setempat`,
+                                      `material.${index}.harga_konversi_satuan_setempat`,
                                       e.target.value
                                     )
                                   }
@@ -486,7 +657,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
+                                    form.errors?.material?.[index]
                                       ?.harga_konversi_satuan_setempat
                                   }
                                 />
@@ -494,13 +665,13 @@ export default function EntriData() {
                             </Field>
                           </td>
                           <td className="px-3 py-6">
-                            <Field name={`materials.${index}.harga_khusus`}>
+                            <Field name={`material.${index}.harga_khusus`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.harga_khusus`,
+                                      `material.${index}.harga_khusus`,
                                       e.target.value
                                     )
                                   }
@@ -508,21 +679,20 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]
-                                      ?.harga_khusus
+                                    form.errors?.material?.[index]?.harga_khusus
                                   }
                                 />
                               )}
                             </Field>
                           </td>
                           <td className="px-3 py-6">
-                            <Field name={`materials.${index}.keterangan`}>
+                            <Field name={`material.${index}.keterangan`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `materials.${index}.keterangan`,
+                                      `material.${index}.keterangan`,
                                       e.target.value
                                     )
                                   }
@@ -530,7 +700,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.materials?.[index]?.keterangan
+                                    form.errors?.material?.[index]?.keterangan
                                   }
                                 />
                               )}
@@ -553,15 +723,15 @@ export default function EntriData() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    const paginatedPeralatans =
-      peralatans?.slice(
+    const paginatedPeralatan =
+      peralatan?.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
       ) || [];
 
     return (
       <div className={`${hide ? "hidden" : ""}`}>
-        <FieldArray name="peralatans">
+        <FieldArray name="peralatan">
           {({ push, remove }) => (
             <div className="mt-6">
               <div className="flex flex-row justify-between items-center">
@@ -635,7 +805,7 @@ export default function EntriData() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedPeralatans.map((item, index) => (
+                      {paginatedPeralatan.map((item, index) => (
                         <tr
                           key={item.id}
                           className={`${
@@ -673,13 +843,13 @@ export default function EntriData() {
                             {item.cities_id}
                           </td>
                           <td className="px-3 py-6">
-                            <Field name={`peralatans.${index}.satuan_setempat`}>
+                            <Field name={`peralatan.${index}.satuan_setempat`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `peralatans.${index}.satuan_setempat`,
+                                      `peralatan.${index}.satuan_setempat`,
                                       e.target.value
                                     )
                                   }
@@ -687,7 +857,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.peralatans?.[index]
+                                    form.errors?.peralatan?.[index]
                                       ?.satuan_setempat
                                   }
                                 />
@@ -696,13 +866,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`peralatans.${index}.harga_sewa_satuan_setempat`}>
+                              name={`peralatan.${index}.harga_sewa_satuan_setempat`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `peralatans.${index}.harga_sewa_satuan_setempat`,
+                                      `peralatan.${index}.harga_sewa_satuan_setempat`,
                                       e.target.value
                                     )
                                   }
@@ -710,7 +880,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.peralatans?.[index]
+                                    form.errors?.peralatan?.[index]
                                       ?.harga_sewa_satuan_setempat
                                   }
                                 />
@@ -719,13 +889,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`peralatans.${index}.harga_sewa_konversi`}>
+                              name={`peralatan.${index}.harga_sewa_konversi`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `peralatans.${index}.harga_sewa_konversi`,
+                                      `peralatan.${index}.harga_sewa_konversi`,
                                       e.target.value
                                     )
                                   }
@@ -733,7 +903,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.peralatans?.[index]
+                                    form.errors?.peralatan?.[index]
                                       ?.harga_sewa_konversi
                                   }
                                 />
@@ -741,13 +911,13 @@ export default function EntriData() {
                             </Field>
                           </td>
                           <td className="px-3 py-6">
-                            <Field name={`peralatans.${index}.harga_pokok`}>
+                            <Field name={`peralatan.${index}.harga_pokok`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `peralatans.${index}.harga_pokok`,
+                                      `peralatan.${index}.harga_pokok`,
                                       e.target.value
                                     )
                                   }
@@ -755,21 +925,20 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.peralatans?.[index]
-                                      ?.harga_pokok
+                                    form.errors?.peralatan?.[index]?.harga_pokok
                                   }
                                 />
                               )}
                             </Field>
                           </td>
                           <td className="px-3 py-6">
-                            <Field name={`peralatans.${index}.keterangan`}>
+                            <Field name={`peralatan.${index}.keterangan`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `peralatans.${index}.keterangan`,
+                                      `peralatan.${index}.keterangan`,
                                       e.target.value
                                     )
                                   }
@@ -777,7 +946,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.peralatans?.[index]?.keterangan
+                                    form.errors?.peralatan?.[index]?.keterangan
                                   }
                                 />
                               )}
@@ -799,8 +968,8 @@ export default function EntriData() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
-    const paginatedTenaga_Kerjas =
-      tenaga_Kerjas?.slice(
+    const paginatedTenaga_kerja =
+      tenaga_kerja?.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
       ) || [];
@@ -863,7 +1032,7 @@ export default function EntriData() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedTenaga_Kerjas.map((item, index) => (
+                      {paginatedTenaga_kerja.map((item, index) => (
                         <tr
                           key={item.id}
                           className={`${
@@ -892,13 +1061,13 @@ export default function EntriData() {
                           </td>
                           <td className="px-3 py-6">
                             <Field
-                              name={`tenaga_Kerjas.${index}.harga_per_satuan_setempat`}>
+                              name={`tenaga_kerja.${index}.harga_per_satuan_setempat`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `tenaga_Kerjas.${index}.harga_per_satuan_setempat`,
+                                      `tenaga_kerja.${index}.harga_per_satuan_setempat`,
                                       e.target.value
                                     )
                                   }
@@ -906,7 +1075,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.tenaga_Kerjas?.[index]
+                                    form.errors?.tenaga_kerja?.[index]
                                       ?.satuan_setempat
                                   }
                                 />
@@ -937,13 +1106,13 @@ export default function EntriData() {
                             </Field>
                           </td>
                           <td className="px-3 py-6">
-                            <Field name={`tenaga_Kerjas.${index}.keterangan`}>
+                            <Field name={`tenaga_kerja.${index}.keterangan`}>
                               {({ field, form }) => (
                                 <TextInput
                                   value={field.value}
                                   onChange={(e) =>
                                     form.setFieldValue(
-                                      `tenaga_Kerjas.${index}.keterangan`,
+                                      `tenaga_kerja.${index}.keterangan`,
                                       e.target.value
                                     )
                                   }
@@ -951,7 +1120,7 @@ export default function EntriData() {
                                   className="input-field"
                                   isRequired={true}
                                   errorMessage={
-                                    form.errors?.tenaga_Kerjas?.[index]
+                                    form.errors?.tenaga_kerja?.[index]
                                       ?.keterangan
                                   }
                                 />
@@ -1039,204 +1208,27 @@ export default function EntriData() {
           value={dataEntri?.kategori_responden || ""}
         />
       </div>
-      <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
-        Blok II: Keterangan Petugas Lapangan
-      </h4>
-      <Formik
-        initialValues={{
-          petugasLapangan: [""],
-          skPenugasanPengawas: null,
-        }}
-        onSubmit={(handleSubmit) => {
-          console.log("Data petugas lapangan:", values.petugasLapangan);
-          console.log("Data skPenugasanPengawas:", values.skPenugasanPengawas);
-          usePenugasanTimStore
-            .getState()
-            .savePengawasData(
-              values.petugasLapangan,
-              values.skPenugasanPengawas
-            );
-        }}>
-        {({ values, submitForm, setFieldValue }) => (
-          <Form className="h-full flex flex-col">
-            <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-              <FieldArray
-                name="petugasLapangan"
-                render={(arrayHelpers) => (
-                  <div className="space-y-4">
-                    {values.petugasLapangan.map((_, index) => (
-                      <div key={index} className="items-center space-y-8">
-                        <Field
-                          as={Dropdown}
-                          name={`petugasLapangan.${index}`}
-                          label={`Nama Petugas Lapangan`}
-                          labelPosition="left"
-                          placeholder="Masukkan Petugas Lapangan"
-                          isRequired={true}
-                          options={userOptions}
-                          onSelect={(selectedOption) =>
-                            setFieldValue(
-                              `petugasLapangan.${index}`,
-                              selectedOption.value
-                            )
-                          }
-                          size="Medium"
-                          errorMessage="Nama Petugas Lapangan tidak boleh kosong"
-                        />
-                        <TextInput
-                          label="NIP"
-                          labelPosition="left"
-                          placeholder="Masukkan NIP Petugas Lapangan"
-                          isRequired={true}
-                          size="Medium"
-                          // labelWidth="100px"
-                          errorMessage="NIP tidak boleh kosong"
-                          value={values.nama_tim}
-                          onChange={(e) =>
-                            setFieldValue("nama_tim", e.target.value)
-                          }
-                        />
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "352px",
-                          }}>
-                          <div className="text-B2">Tanggal Survei</div>
-                          <Datepicker
-                            label="Tanggal Survei"
-                            value={date}
-                            onChange={handleDateChange}
-                            error={error}
-                            helperText={helperText}
-                          />
-                        </div>
-                        <Field
-                          as={Dropdown}
-                          name={`petugasLapangan.${index}`}
-                          label={`Nama Pengawas`}
-                          labelPosition="left"
-                          placeholder="Masukkan Pengawas"
-                          isRequired={true}
-                          options={userOptions}
-                          onSelect={(selectedOption) =>
-                            setFieldValue(
-                              `petugasLapangan.${index}`,
-                              selectedOption.value
-                            )
-                          }
-                          size="Medium"
-                          errorMessage="Nama Pengawas tidak boleh kosong"
-                        />
-                        <TextInput
-                          label="NIP Pengawas"
-                          labelPosition="left"
-                          placeholder="Masukkan NIP Pengawas"
-                          isRequired={true}
-                          size="Medium"
-                          labelWidth="100px"
-                          errorMessage="NIP tidak boleh kosong"
-                          value={values.nama_tim}
-                          onChange={(e) =>
-                            setFieldValue("nama_tim", e.target.value)
-                          }
-                        />
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "300px",
-                          }}>
-                          <div className="text-B2">Tanggal Pengawasan</div>
-                          <Datepicker
-                            label="Tanggal Pengawasan"
-                            value={date}
-                            onChange={handleDateChange}
-                            error={error}
-                            helperText={helperText}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              />
-            </div>
-          </Form>
-        )}
-      </Formik>
-      <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
-        Blok III: Keterangan Pemberi Informasi
-      </h4>
-      <Formik
-        initialValues={{
-          petugasLapangan: "",
-          tanggalSurvei: null,
-        }}
-        onSubmit={(handleSubmit) => {
-          // Handle form submission
-          console.log(values);
-        }}>
-        {({ values, setFieldValue, handleSubmit }) => (
-          <Form className="h-full flex flex-col">
-            <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-              {/* Dropdown for Nama Pemberi Informasi */}
-              {/* ini kl bisa style manual harusnya soalnya aku gak nemu ini styling nya di mana*/}
-              {/* <Field
-                as={Dropdown}
-                name="petugasLapangan"
-                label="Nama Pemberi Informasi/Jabatan"
-                labelPosition="left"
-                placeholder="Pilih Nama Pemberi Informasi/Jabatan"
-                isRequired={true}
-                options={userOptions}
-                onSelect={(selectedOption) =>
-                  setFieldValue("petugasLapangan", selectedOption.value)
-                }
-                size="Medium"
-                errorMessage="Nama Pemberi Informasi/Jabatan tidak boleh kosong"
-              /> */}
-              <TextInput
-                label="ama Pemberi Informasi/Jabatan"
-                labelPosition="left"
-                placeholder="Masukkan Nama Pemberi Informasi/Jabatan"
-                isRequired={true}
-                size="Medium"
-                errorMessage="Nama Pemberi Informasi/Jabatan tidak boleh kosong"
-                value={values.nip_pengawas || ""}
-                onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
-              />
-              {/* Datepicker for Tanggal Survei */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "352px",
-                }}>
-                <div className="text-B2">Tanggal Survei</div>
-                <Datepicker
-                  label="Tanggal Survei"
-                  value={date}
-                  onChange={handleDateChange}
-                  error={error}
-                  helperText={helperText}
-                />
-              </div>
-            </div>
-          </Form>
-        )}
-      </Formik>
 
-      <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
-        Blok IV: Keterangan Pemberi Informasi
-      </h4>
       <Formik initialValues={initialValues} onSubmit={handleSubmit}>
         {({ values, setFieldValue }) => (
           <Form>
+            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
+              Blok II: Keterangan Petugas Lapangan
+            </h4>
             <PetugasLapanganForm
               values={values}
               setFieldValue={setFieldValue}
             />
+            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
+              Blok III: Keterangan Pemberi Informasi
+            </h4>
+            <PemberiInformasiForm
+              values={values}
+              setFieldValue={setFieldValue}
+            />
+            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
+              Blok IV: Keterangan Pemberi Informasi
+            </h4>
             <MaterialForm
               values={values}
               setFieldValue={setFieldValue}
@@ -1255,10 +1247,6 @@ export default function EntriData() {
               hide={selectedValue !== 2}
             />
             <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-              <Button variant="solid_yellow" size="Medium">
-                Simpan Sebagai Draft
-              </Button>
-
               <Button variant="solid_blue" size="Medium" type="submit">
                 Simpan
               </Button>
@@ -1266,23 +1254,12 @@ export default function EntriData() {
           </Form>
         )}
       </Formik>
-
-      <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-        <Button
-          variant="solid_yellow"
-          size="Medium"
-          // onClick={navigateToTahap1}
-        >
-          Simpan Sebagai Draft
-        </Button>
-
-        <Button
-          variant="solid_blue"
-          size="Medium"
-          onClick={() => handleSubmit(values)}>
-          Simpan
-        </Button>
-      </div>
+      <CustomAlert
+        message={alertInfo.message}
+        severity={alertInfo.severity}
+        openInitially={alertInfo.open}
+        onClose={handleAlertClose}
+      />
     </div>
   );
 }

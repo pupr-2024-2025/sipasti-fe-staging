@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../../../components/navigationbar";
 import Pagination from "../../../components/pagination";
 import informasi_tahap_pengumpulanStore from "./informasi_tahap_pengumpulan/informasi_tahap_pengumpulan";
-import { More } from "iconsax-react";
+import { More, ClipboardText } from "iconsax-react";
 import colors from "../../../styles/colors";
 import Link from "next/link";
 import Modal from "../../../components/modal";
 import { CloseCircle } from "iconsax-react";
 import SearchBox from "../../../components/searchbox";
+import TextInput from "../../../components/input";
+import Button from "../../../components/button";
 
 export default function informasi_tahap_pengumpulan() {
   const [activeVendorMenu, setActiveVendorMenu] = useState(null);
@@ -16,13 +18,18 @@ export default function informasi_tahap_pengumpulan() {
     (state) => state.initialValues
   );
   const fetchPDF = informasi_tahap_pengumpulanStore((state) => state.fetchPDF);
-  const { fetchVendor } = informasi_tahap_pengumpulanStore();
+  const { fetchVendor, fetchGenerateLink } = informasi_tahap_pengumpulanStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [currentModal, setCurrentModal] = useState(1);
   const itemsPerPage = 10;
   const itemsPerPageModal = 5;
-  const { initialValues, fetchStatusProgres } =
-    informasi_tahap_pengumpulanStore();
+  const {
+    initialValues,
+    fetchStatusProgres,
+    urlKuisionerResult,
+    setUrlKuisionerResult,
+    resetUrlKuisionerResult,
+  } = informasi_tahap_pengumpulanStore();
   const { status_progres } = initialValues;
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuPosition, setMenuPosition] = useState({
@@ -66,6 +73,7 @@ export default function informasi_tahap_pengumpulan() {
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGenerateLinkModalOpen, setIsGenerateLinkModalOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredVendor, setFilteredVendor] = useState([]);
@@ -127,6 +135,7 @@ export default function informasi_tahap_pengumpulan() {
   };
 
   const handleToggleVendorMenu = (vendorId, event) => {
+    console.log("Toggling vendor menu for ID:", vendorId);
     if (activeVendorMenu === vendorId) {
       setActiveVendorMenu(null);
     } else {
@@ -171,6 +180,39 @@ export default function informasi_tahap_pengumpulan() {
     setIsModalOpen(true);
   };
 
+  const openGenerateLinkModal = async (shortlist_id) => {
+    console.log("Vendor data received:", shortlist_id);
+
+    if (!shortlist_id) {
+      alert("ID Shortlist tidak ditemukan.");
+      console.error("Shortlist ID is null or undefined");
+      return;
+    }
+
+    try {
+      console.log("Fetching link for shortlist_id:", shortlist_id);
+      const urlResult = await fetchGenerateLink(shortlist_id);
+
+      if (urlResult) {
+        console.log("URL Kuisioner berhasil didapatkan:", urlResult);
+        setUrlKuisionerResult(urlResult);
+        // window.open(urlResult, "_blank");
+      } else {
+        alert("Gagal mendapatkan link kuisioner. Silakan coba lagi.");
+        console.error("URL Kuisioner tidak ditemukan atau gagal diproses.");
+      }
+    } catch (error) {
+      console.error("Terjadi kesalahan saat membuka modal:", error.message);
+    } finally {
+      setIsGenerateLinkModalOpen(true);
+      console.log("Generate Link Modal dibuka.");
+    }
+  };
+
+  const closeGenerateLinkModal = () => {
+    // setSelectedVendor(null);
+    setIsGenerateLinkModalOpen(false);
+  };
   useEffect(() => {
     if (isModalOpen) {
       setActiveMenu(null);
@@ -228,7 +270,7 @@ export default function informasi_tahap_pengumpulan() {
                       <div className="flex justify-center items-center gap-2">
                         <button
                           className={`w-[52px] h-[52px] rounded-full flex items-center justify-center transition-colors 
-        hover:bg-custom-blue-50 cursor-pointer`}
+                          hover:bg-custom-blue-50 cursor-pointer`}
                           onClick={(e) => handleToggleMenu(item.id, e)}>
                           <More
                             size="24"
@@ -306,20 +348,19 @@ export default function informasi_tahap_pengumpulan() {
                           <td className="px-3 py-6 justify-center content-center">
                             <button
                               className={`w-[52px] h-[52px] rounded-full flex items-center justify-center transition-colors 
-                         hover:bg-custom-blue-50 cursor-pointer`}
+                            hover:bg-custom-blue-50 cursor-pointer`}
                               onClick={(e) =>
-                                handleToggleVendorMenu(item.id, e)
+                                handleToggleVendorMenu(item.shortlist_id, e)
                               }>
                               <More
                                 size="24"
                                 color={colors.Emphasis.Light.On_Surface.High}
                               />
                             </button>
-                            {activeVendorMenu === item.id && (
+                            {activeVendorMenu === item.shortlist_id && (
                               <div
                                 className="absolute bg-white rounded-[12px] mr-[12px] shadow-lg p-2 w-56"
                                 style={{
-                                  // top: `${menuPosition.top}px`,
                                   left: "705px",
                                   right: menuPosition.alignRight
                                     ? 0
@@ -334,17 +375,25 @@ export default function informasi_tahap_pengumpulan() {
                                   onClick={() =>
                                     handleLinkClick(item.shortlist_id)
                                   }>
-                                  Link Kuesioner
+                                  Lihat PDF
                                 </Link>
                                 <Link
-                                  href="/pengumpulan_data/pengolah_data/entri_data/"
+                                  href={`/pengumpulan_data/pengolah_data/entri_data/${item.shortlist_id}`}
                                   className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200">
                                   Entri Data
                                 </Link>
                                 <Link
-                                  href="#"
+                                  href={`/pengumpulan_data/pengawas/pemeriksaan_data/${item.shortlist_id}`}
                                   className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200">
                                   Pemeriksaan
+                                </Link>
+                                <Link
+                                  href="#"
+                                  className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200"
+                                  onClick={() =>
+                                    openGenerateLinkModal(item.shortlist_id)
+                                  }>
+                                  Generate Link Kuesioner
                                 </Link>
                               </div>
                             )}
@@ -372,6 +421,56 @@ export default function informasi_tahap_pengumpulan() {
                 onPageChange={setCurrentModal}
               />
             )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Baru */}
+      <Modal isOpen={isGenerateLinkModalOpen} onClose={closeGenerateLinkModal}>
+        <div className="p-3 space-y-3">
+          <div className="flex justify-between items-center content-center">
+            <h5 className="text-H5 mb-4">Link Kuesioner</h5>
+            <button onClick={closeGenerateLinkModal}>
+              <CloseCircle size="24" />
+            </button>
+          </div>
+          <div className="flex items-end gap-4">
+            <TextInput
+              label="Link"
+              labelPosition="top"
+              placeholder="Link tidak ditemukan"
+              size="Medium"
+              value={urlKuisionerResult}
+              labelWidth="100px"
+              disabledActive={true}
+              className="flex-1"
+            />
+            <button
+              className={`w-[52px] h-[52px] rounded-full flex items-center justify-center transition-colors 
+      hover:bg-custom-blue-50 cursor-pointer border-2 border-surface-light-outline outline-none focus:outline-custom-blue-500`}
+              onClick={() => {
+                navigator.clipboard
+                  .writeText(urlKuisionerResult)
+                  .then(() => {
+                    alert("Link berhasil disalin ke clipboard!");
+                  })
+                  .catch(() => {
+                    alert("Gagal menyalin link.");
+                  });
+              }}>
+              <ClipboardText
+                size="24"
+                color={colors.Emphasis.Light.On_Surface.High}
+              />
+            </button>
+          </div>
+          <div className="flex justify-end gap-4">
+            <Button
+              variant="solid_blue"
+              size="Medium"
+              onClick={closeGenerateLinkModal}>
+              Tutup
+            </Button>
           </div>
         </div>
       </Modal>

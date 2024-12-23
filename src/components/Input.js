@@ -180,7 +180,7 @@ const TextInput = ({
             </div>
           </div>
           {error && (
-            <div className="flex items-center mt-1 ml-[236px]">
+            <div className="flex items-center mt-1 ml-[400px]">
               <CloseCircle
                 color={colors.Solid.Basic.Red[500]}
                 variant="Linear"

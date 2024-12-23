@@ -6,6 +6,7 @@ const informasi_tahap_pengumpulanStore = create((set) => ({
     status_progres: [],
     vendor: [],
   },
+  urlKuisionerResult: "",
   fetchStatusProgres: async () => {
     try {
       const response = await axios.get(
@@ -64,6 +65,30 @@ const informasi_tahap_pengumpulanStore = create((set) => ({
       return null;
     }
   },
+  fetchGenerateLink: async (shortlist_id) => {
+    console.log("fetchGenerateLink", shortlist_id);
+    try {
+      const response = await axios.get(
+        `https://api-ecatalogue-staging.online/api/pengumpulan-data/generate-link/${shortlist_id}`
+      );
+
+      const { data } = response;
+      if (data.status === "success" && typeof data.data === "string") {
+        return data.data;
+      } else {
+        console.error(
+          "Gagal mendapatkan data:",
+          data.message || "Data tidak valid"
+        );
+        return null;
+      }
+    } catch (error) {
+      console.error("Terjadi kesalahan saat mengambil data:", error.message);
+      return null;
+    }
+  },
+  setUrlKuisionerResult: (url) => set({ urlKuisionerResult: url }),
+  resetUrlKuisionerResult: () => set({ urlKuisionerResult: "" }),
 }));
 
 export default informasi_tahap_pengumpulanStore;
