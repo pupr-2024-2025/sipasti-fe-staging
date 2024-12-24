@@ -195,8 +195,11 @@ export default function informasi_tahap_pengumpulan() {
 
       if (urlResult) {
         console.log("URL Kuisioner berhasil didapatkan:", urlResult);
-        setUrlKuisionerResult(urlResult);
-        // window.open(urlResult, "_blank");
+        const token = urlResult.split("token=")[1];
+        const newLink = `http://localhost:3000/pengumpulan_data/survei_kuesioner/${token}`;
+
+        console.log(newLink);
+        setUrlKuisionerResult(newLink);
       } else {
         alert("Gagal mendapatkan link kuisioner. Silakan coba lagi.");
         console.error("URL Kuisioner tidak ditemukan atau gagal diproses.");

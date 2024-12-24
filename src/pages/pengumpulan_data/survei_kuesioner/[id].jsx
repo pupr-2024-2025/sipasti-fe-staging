@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { Field, FieldArray, Form, Formik } from "formik";
 import { useStore } from "zustand";
-import Navbar from "../../../../components/navigationbar";
-import CustomAlert from "../../../../components/alert";
-import TextInput from "../../../../components/input";
-import entri_dataStore from "../pemeriksaan_store/pemeriksaan_data";
-import informasi_tahap_pengumpulanStore from "../informasi_tahap_pengumpulan/informasi_tahap_pengumpulan";
-import SearchBox from "../../../../components/searchbox";
-import Button from "../../../../components/button";
-import Dropdown from "../../../../components/dropdown";
-import RadioButton from "../../../../components/radiobutton";
+import Navbar from "../../../components/navigationbar";
+import CustomAlert from "../../../components/alert";
+import TextInput from "../../../components/input";
+import survei_kuesionerStore from "./survei_kuesioner_store/survei_kuesioner";
+import informasi_tahap_pengumpulanStore from "../pengawas/informasi_tahap_pengumpulan/informasi_tahap_pengumpulan";
+import SearchBox from "../../../components/searchbox";
+import Button from "../../../components/button";
+import Dropdown from "../../../components/dropdown";
 import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import axios from "axios";
@@ -21,8 +20,8 @@ import { DatePicker } from "@mui/x-date-pickers";
 
 dayjs.locale("id");
 
-export default function EntriData() {
-  const [radioState, setRadioState] = useState({});
+export default function survei_kuesioner() {
+  const [currentAction, setCurrentAction] = useState("save");
   const [date, setDate] = useState(null);
   const [error, setError] = useState(false);
   const [helperText, setHelperText] = useState("");
@@ -41,7 +40,7 @@ export default function EntriData() {
     setSelectedValue,
     data_vendor_id,
     identifikasi_kebutuhan_id,
-  } = useStore(entri_dataStore);
+  } = useStore(survei_kuesionerStore);
 
   const router = useRouter();
   const { id } = router.query;
@@ -64,29 +63,78 @@ export default function EntriData() {
     setAlertInfo((prev) => ({ ...prev, open: false }));
   };
 
-  const handleSubmit = async (values) => {
+  const validateFields = (values, action) => {
+    console.log("Action yang diterima:", action);
+    if (action === "draft") {
+      console.log("Validasi dilewati karena ini adalah draf.");
+      return true;
+    }
+
+    if (!values.tanggal_survei) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Tanggal survei wajib diisi!",
+      });
+      return false;
+    }
+    if (!values.user_id_petugas_lapangan) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Petugas lapangan wajib diisi!",
+      });
+      return false;
+    }
+    if (!values.user_id_pengawas) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Pengawas wajib diisi!",
+      });
+      return false;
+    }
+    if (!values.nama_pemberi_informasi) {
+      setAlertInfo({
+        open: true,
+        severity: "error",
+        message: "Nama pemberi informasi wajib diisi!",
+      });
+      return false;
+    }
+
+    return true;
+  };
+  console.log("data vendor id:", data_vendor_id);
+  const handleSubmit = async (values, { setSubmitting }) => {
     console.log("Values sebelum validasi:", values);
-
-    // Persiapkan payload yang akan dikirim ke API
-    const payload = {
-      ...values,
-      data_vendor_id,
-      identifikasi_kebutuhan_id,
-      verifikasi_validasi: Object.keys(radioState).map((id_pemeriksaan) => ({
-        id_pemeriksaan,
-        status_pemeriksaan: radioState[id_pemeriksaan].memenuhi
-          ? "memenuhi"
-          : "tidak_memenuhi",
-        verified_by: "pengawas",
-      })),
-    };
-
-    console.log("Payload yang akan dikirim ke API:", payload);
+    console.log("Action yang diterima:", currentAction);
+    console.log("valuenya adalah...", values);
+    if (currentAction === "draft") {
+      console.log("Skip validasi karena ini draf.");
+    } else if (!validateFields(values, currentAction)) {
+      setSubmitting(false);
+      return;
+    }
 
     try {
-      // Kirim data ke API
+      const payload = {
+        type_save: currentAction === "draft" ? "draft" : "final",
+        user_id_petugas_lapangan: values.user_id_petugas_lapangan,
+        user_id_pengawas: values.user_id_pengawas,
+        nama_pemberi_informasi: values.nama_pemberi_informasi,
+        identifikasi_kebutuhan_id,
+        tanggal_survei: values.tanggal_survei,
+        tanggal_pengawasan: values.tanggal_pengawasan,
+        material: values.material || [],
+        peralatan: values.peralatan || [],
+        tenaga_kerja: values.tenaga_kerja || [],
+        data_vendor_id,
+        identifikasi_kebutuhan_id,
+      };
+      console.log("Payload yang dikirim:", payload);
       const response = await axios.post(
-        "https://api-ecatalogue-staging.online/api/pengumpulan-data/verifikasi-pengawas",
+        "https://api-ecatalogue-staging.online/api/pengumpulan-data/store-entri-data",
         payload,
         {
           headers: {
@@ -97,15 +145,10 @@ export default function EntriData() {
 
       console.log("Response dari API:", response.data);
 
-      // Cek status response
-      if (response.status === 200) {
+      // Cek apakah response dari API adalah "success" atau "error"
+      if (response.data?.status === "success") {
         const identifikasiKebutuhanId =
           response.data?.data?.material?.[0]?.identifikasi_kebutuhan_id ?? 0;
-
-        console.log(
-          "ID Identifikasi Kebutuhan yang disimpan ke localStorage:",
-          identifikasiKebutuhanId
-        );
 
         localStorage.setItem(
           "identifikasi_kebutuhan_id",
@@ -115,15 +158,25 @@ export default function EntriData() {
         setAlertInfo({
           open: true,
           severity: "success",
-          message: "Data berhasil disimpan!",
+          message: response.data?.message ?? "Data berhasil disimpan!",
         });
 
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        if (currentAction !== "draft") {
+          setTimeout(() => {
+            window.location.reload(); // Reload jika status sukses
+          }, 2000);
+        }
+      } else {
+        // Jika response status bukan "success", tampilkan pesan error dan tetap di halaman
+        setAlertInfo({
+          open: true,
+          severity: "error",
+          message:
+            response.data?.message ?? "Terjadi kesalahan. Silakan coba lagi.",
+        });
       }
     } catch (error) {
-      console.error("Error saat submit data ke API:", error);
+      console.error("Error submitting data:", error);
 
       const errorMessage =
         error.response?.data?.message ??
@@ -133,20 +186,8 @@ export default function EntriData() {
         severity: "error",
         message: errorMessage,
       });
-    }
-
-    console.log("Data berhasil disimpan ke state:", values);
-  };
-
-  const handleDateChange = (newDate) => {
-    console.log("Tanggal yang dipilih di DatePicker:", newDate);
-    if (!newDate) {
-      setError(true);
-      setHelperText("Tanggal harus diisi");
-    } else {
-      setError(false);
-      setHelperText("");
-      setFieldValue("tanggal_survei", newDate);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -160,96 +201,94 @@ export default function EntriData() {
   // useEffect(() => {
   //   fetchData(136);
   // }, [fetchData]);
-  console.log("dataEntri:", dataEntri);
-  const PemberiInformasiForm = ({ dataEntri, setFieldValue }) => {
+
+  const PemberiInformasiForm = ({ values, setFieldValue }) => {
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
         <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-          <div className="space-y-8">
+          <div className=" space-y-8">
             <TextInput
               label="Nama Pemberi Informasi / Jabatan"
               labelPosition="left"
-              placeholder="Nama Pemberi Informasi / Jabatan tidak ada"
+              placeholder="Masukkan Nama Pemberi Informasi / Jabatan"
+              isRequired={true}
               size="Medium"
               errorMessage="Nama pemberi informasi / jabatan tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_pemberi_informasi
-                  ?.nama_pemberi_informasi || ""
+              value={values.nama_pemberi_informasi || ""}
+              onChange={(e) =>
+                setFieldValue("nama_pemberi_informasi", e.target.value)
               }
-              disabledActive={true}
             />
             <TextInput
               label="Tanda Tangan Responden"
               labelPosition="left"
-              placeholder="Tanda Tangan Responden tidak ada"
+              placeholder="Tanda Tangan Responden"
+              // isRequired={true}
               size="Medium"
-              disabledActive={true}
               errorMessage="Tanda tangan responden tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_pemberi_informasi
-                  ?.tanda_tangan_responden || ""
-              }
+              // value={values.nip_pengawas || ""}
+              onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
             />
           </div>
         </div>
       </LocalizationProvider>
     );
   };
-  const PetugasLapanganForm = ({ dataEntri, setFieldValue }) => {
-    console.log("Data Entri di petugas lapangan:", dataEntri);
+
+  const PetugasLapanganForm = ({ values, setFieldValue }) => {
     return (
       <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
         <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-          <div className="space-y-8">
-            <TextInput
+          <div className=" space-y-8">
+            <Field
+              as={Dropdown}
+              name="user_id_petugas_lapangan"
               label="Nama Petugas Lapangan"
               labelPosition="left"
-              placeholder="Nama Petugas Lapangan tidak ada"
+              placeholder="Masukkan Petugas Lapangan"
+              isRequired={true}
+              options={userOptions}
+              onSelect={(selectedOption) =>
+                setFieldValue("user_id_petugas_lapangan", selectedOption.value)
+              }
               size="Medium"
               errorMessage="Nama Petugas Lapangan tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_petugas_lapangan?.nama_petugas_lapangan ||
-                ""
-              }
-              disabledActive={true}
             />
-
             <TextInput
-              label="NIP Petugas Lapangan"
+              label="NIP"
               labelPosition="left"
-              placeholder="NIP Petugas Lapangan tidak ada"
+              placeholder="Masukkan NIP Petugas Lapangan"
+              // isRequired={true}
               size="Medium"
-              errorMessage="NIP Petugas Lapangan tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_petugas_lapangan?.nip_petugas_lapangan ||
-                ""
-              }
-              disabledActive={true}
+              errorMessage="NIP tidak boleh kosong"
+              // value={values.nip || ""}
+              onChange={(e) => setFieldValue("nip", e.target.value)}
             />
-
             <div
-              style={{ display: "flex", alignItems: "center", gap: "256px" }}>
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "256px",
+              }}>
               <div className="text-B2" style={{ minWidth: "200px" }}>
                 Tanggal Survei
               </div>
               <DatePicker
                 label="Tanggal Survei"
                 value={
-                  dataEntri?.keterangan_petugas_lapangan?.tanggal_survei
-                    ? dayjs(
-                        dataEntri.keterangan_petugas_lapangan.tanggal_survei,
-                        "DD-MM-YYYY"
-                      )
+                  values.tanggal_survei
+                    ? dayjs(values.tanggal_survei, "DD-MM-YYYY")
                     : null
                 }
                 onChange={(date) => {
                   const formattedDate = date.format("DD-MM-YYYY");
                   setFieldValue("tanggal_survei", formattedDate);
+                  console.log("Tanggal survei yang dipilih:", formattedDate);
                 }}
                 slotProps={{
                   textField: {
-                    error: false,
-                    helperText: "",
+                    error,
+                    helperText: error ? "Tanggal harus diisi" : "",
                     fullWidth: true,
                   },
                 }}
@@ -257,56 +296,60 @@ export default function EntriData() {
                   cancelButtonLabel: "Batal",
                   okButtonLabel: "Pilih",
                 }}
-                disabled
               />
             </div>
-
-            <TextInput
+            <Field
+              as={Dropdown}
+              name="user_id_pengawas"
               label="Nama Pengawas"
               labelPosition="left"
-              placeholder="Nama Pengawas tidak ada"
+              placeholder="Masukkan Nama Pengawas"
+              isRequired={true}
+              options={pengawasUserOptions}
+              onSelect={(selectedOption) =>
+                setFieldValue("user_id_pengawas", selectedOption.value)
+              }
               size="Medium"
               errorMessage="Nama Pengawas tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_petugas_lapangan?.nama_pengawas || ""
-              }
-              disabledActive={true}
             />
-
             <TextInput
               label="NIP Pengawas"
               labelPosition="left"
-              placeholder="NIP Pengawas tidak ada"
+              placeholder="Masukkan NIP Pengawas"
+              // isRequired={true}
               size="Medium"
-              errorMessage="NIP Pengawas tidak boleh kosong"
-              value={dataEntri?.keterangan_petugas_lapangan?.nip_pengawas || ""}
-              disabledActive={true}
+              errorMessage="NIP pengawas tidak boleh kosong"
+              // value={values.nip_pengawas || ""}
+              onChange={(e) => setFieldValue("nip_pengawas", e.target.value)}
             />
-
             <div
-              style={{ display: "flex", alignItems: "center", gap: "256px" }}>
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "256px",
+              }}>
               <div className="text-B2" style={{ minWidth: "200px" }}>
                 Tanggal Pengawasan
               </div>
               <DatePicker
                 label="Tanggal Pengawasan"
                 value={
-                  dataEntri?.keterangan_petugas_lapangan?.tanggal_pengawasan
-                    ? dayjs(
-                        dataEntri.keterangan_petugas_lapangan
-                          .tanggal_pengawasan,
-                        "DD-MM-YYYY"
-                      )
+                  values.tanggal_pengawasan
+                    ? dayjs(values.tanggal_pengawasan, "DD-MM-YYYY")
                     : null
                 }
                 onChange={(date) => {
                   const formattedDate = date.format("DD-MM-YYYY");
                   setFieldValue("tanggal_pengawasan", formattedDate);
+                  console.log(
+                    "Tanggal Pengawasan yang dipilih:",
+                    formattedDate
+                  );
                 }}
                 slotProps={{
                   textField: {
-                    error: false,
-                    helperText: "",
+                    error,
+                    helperText: error ? "Tanggal harus diisi" : "",
                     fullWidth: true,
                   },
                 }}
@@ -314,7 +357,6 @@ export default function EntriData() {
                   cancelButtonLabel: "Batal",
                   okButtonLabel: "Pilih",
                 }}
-                disabled
               />
             </div>
           </div>
@@ -457,29 +499,212 @@ export default function EntriData() {
                           <td className="px-3 py-6 text-sm">
                             {item.cities_id}
                           </td>
-                          <td className="px-3 py-6">{item.satuan_setempat}</td>
                           <td className="px-3 py-6">
-                            {item.satuan_setempat_panjang}
+                            <Field name={`material.${index}.satuan_setempat`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    form.setFieldValue(
+                                      `material.${index}.satuan_setempat`,
+                                      e.target.value
+                                    );
+                                    form.setFieldValue(
+                                      `material.${index}.id`,
+                                      item.id
+                                    );
+                                  }}
+                                  placeholder="Satuan Setempat"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]
+                                      ?.satuan_setempat
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
                           <td className="px-3 py-6">
-                            {item.satuan_setempat_lebar}
+                            <Field
+                              name={`material.${index}.satuan_setempat_panjang`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.satuan_setempat_panjang`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Satuan Setempat Panjang"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]
+                                      ?.satuan_setempat_panjang
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
                           <td className="px-3 py-6">
-                            {item.satuan_setempat_tinggi}
+                            <Field
+                              name={`material.${index}.satuan_setempat_lebar`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.satuan_setempat_lebar`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Satuan Setempat Lebar"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]
+                                      ?.satuan_setempat_lebar
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
                           <td className="px-3 py-6">
-                            {item.konversi_satuan_setempat_ke_satuan_standar}
+                            <Field
+                              name={`material.${index}.satuan_setempat_tinggi`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.satuan_setempat_tinggi`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Satuan Setempat Tinggi"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]
+                                      ?.satuan_setempat_tinggi
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
                           <td className="px-3 py-6">
-                            {item.harga_per_satuan_setempat}
+                            <Field
+                              name={`material.${index}.konversi_satuan_setempat`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.konversi_satuan_setempat`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Konversi Satuan Setempat"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]
+                                      ?.konversi_satuan_setempat
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
                           <td className="px-3 py-6">
-                            {
-                              item.harga_konversi_satuan_setempat_ke_satuan_standar
-                            }
+                            <Field
+                              name={`material.${index}.harga_satuan_setempat`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.harga_satuan_setempat`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Harga Satuan Setempat"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]
+                                      ?.harga_satuan_setempat
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
-                          <td className="px-3 py-6">{item.harga_khusus}</td>
-                          <td className="px-3 py-6">{item.keterangan}</td>
+                          <td className="px-3 py-6">
+                            <Field
+                              name={`material.${index}.harga_konversi_satuan_setempat`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.harga_konversi_satuan_setempat`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Harga Konversi Satuan Setempat"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]
+                                      ?.harga_konversi_satuan_setempat
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </td>
+                          <td className="px-3 py-6">
+                            <Field name={`material.${index}.harga_khusus`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.harga_khusus`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Harga Khusus"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]?.harga_khusus
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </td>
+                          <td className="px-3 py-6">
+                            <Field name={`material.${index}.keterangan`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `material.${index}.keterangan`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Keterangan"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.material?.[index]?.keterangan
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -616,15 +841,116 @@ export default function EntriData() {
                           <td className="px-3 py-6 text-sm">
                             {item.cities_id}
                           </td>
-                          <td className="px-3 py-6">{item.satuan_setempat}</td>
                           <td className="px-3 py-6">
-                            {item.harga_sewa_satuan_setempat}
+                            <Field name={`peralatan.${index}.satuan_setempat`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `peralatan.${index}.satuan_setempat`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Satuan Setempat"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.peralatan?.[index]
+                                      ?.satuan_setempat
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
                           <td className="px-3 py-6">
-                            {item.harga_sewa_konversi}
+                            <Field
+                              name={`peralatan.${index}.harga_sewa_satuan_setempat`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `peralatan.${index}.harga_sewa_satuan_setempat`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Harga Sewa Satuan Setempat"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.peralatan?.[index]
+                                      ?.harga_sewa_satuan_setempat
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
-                          <td className="px-3 py-6">{item.harga_pokok}</td>
-                          <td className="px-3 py-6">{item.keterangan}</td>
+                          <td className="px-3 py-6">
+                            <Field
+                              name={`peralatan.${index}.harga_sewa_konversi`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `peralatan.${index}.harga_sewa_konversi`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Harga Sewa Konversi"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.peralatan?.[index]
+                                      ?.harga_sewa_konversi
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </td>
+                          <td className="px-3 py-6">
+                            <Field name={`peralatan.${index}.harga_pokok`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `peralatan.${index}.harga_pokok`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Harga Pokok"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.peralatan?.[index]?.harga_pokok
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </td>
+                          <td className="px-3 py-6">
+                            <Field name={`peralatan.${index}.keterangan`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `peralatan.${index}.keterangan`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Keterangan"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.peralatan?.[index]?.keterangan
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -733,196 +1059,77 @@ export default function EntriData() {
                             {item.cities_id}
                           </td>
                           <td className="px-3 py-6">
-                            {item.harga_per_satuan_setempat}
+                            <Field
+                              name={`tenaga_kerja.${index}.harga_per_satuan_setempat`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    form.setFieldValue(
+                                      `tenaga_kerja.${index}.harga_per_satuan_setempat`,
+                                      e.target.value
+                                    );
+                                    form.setFieldValue(
+                                      `tenaga_kerja.${index}.id`,
+                                      item.id
+                                    );
+                                  }}
+                                  placeholder="Harga per Satuan Setempat"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.tenaga_kerja?.[index]
+                                      ?.satuan_setempat
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
                           <td className="px-3 py-6">
-                            {item.harga_konversi_per_jam}
+                            <Field
+                              name={`tenaga_kerja.${index}.harga_konversi_perjam`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `tenaga_kerja.${index}.harga_konversi_perjam`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Harga Konversi per Jam"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.tenaga_kerja?.[index]
+                                      ?.harga_konversi_perjam
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
-                          <td className="px-3 py-6">{item.keterangan}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-        </FieldArray>
-      </div>
-    );
-  };
-
-  const VerifikasiDokumenForm = ({ hide }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-
-    const staticData = [
-      {
-        id_pemeriksaan: "A",
-        no: "A",
-        kelengkapan: "KRITERIA VERIFIKASI",
-        isTitle: true,
-      },
-      {
-        id_pemeriksaan: "A1",
-        no: 1,
-        kelengkapan: "Memeriksa kelengkapan data dan ada tidaknya bukti dukung",
-      },
-      {
-        id_pemeriksaan: "A2",
-        no: 2,
-        kelengkapan:
-          "Jenis material, peralatan, tenaga kerja yang dilakukan pengumpulan data berdasarkan identifikasi kebutuhan.",
-      },
-      { id_pemeriksaan: "A3", no: 3, kelengkapan: "Sumber harga pasar." },
-      {
-        id_pemeriksaan: "A4",
-        no: 4,
-        kelengkapan:
-          "Harga survei didapat minimal 3 vendor untuk setiap jenis material peralatan atau sesuai dengan kondisi di lapangan.",
-      },
-      {
-        id_pemeriksaan: "A5",
-        no: 5,
-        kelengkapan: "Khusus peralatan mencantumkan harga beli dan harga sewa.",
-      },
-      {
-        id_pemeriksaan: "B",
-        no: "B",
-        kelengkapan: "KRITERIA VALIDASI",
-        isTitle: true,
-      },
-      {
-        id_pemeriksaan: "B1",
-        no: 1,
-        kelengkapan:
-          "Kuesioner terisi lengkap dan sesuai dengan petunjuk cara pengisian kuesioner (lampiran iv) dan sudah ditandatangani Responden, Petugas Lapangan, dan Pengawas.",
-      },
-      {
-        id_pemeriksaan: "B2",
-        no: 2,
-        kelengkapan:
-          "Pemeriksaan dilakukan dengan diskusi/tatap muka antara Pengawas dan Petugas Lapangan.",
-      },
-    ];
-
-    const [radioState, setRadioState] = useState(
-      staticData.reduce((acc, item) => {
-        acc[item.id] = {
-          memenuhi: false,
-          tidak_memenuhi: false,
-        };
-        return acc;
-      }, {})
-    );
-
-    const handleRadioChange = (id_pemeriksaan, type) => {
-      console.log(
-        `Radio button changed: id_pemeriksaan=${id_pemeriksaan}, type=${type}`
-      );
-      setRadioState((prevState) => ({
-        ...prevState,
-        [id_pemeriksaan]: {
-          memenuhi: type === "memenuhi",
-          tidak_memenuhi: type === "tidak_memenuhi",
-        },
-      }));
-    };
-
-    console.log("radio state", radioState);
-
-    const paginatedData =
-      staticData?.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      ) || [];
-
-    return (
-      <div className={`${hide ? "hidden" : ""}`}>
-        <FieldArray name="VerifikasiDokumenForm">
-          {({ push, remove }) => (
-            <div>
-              <div className="rounded-[16px] border border-gray-200 overflow-hidden mt-4">
-                <div className="overflow-x-auto">
-                  <table className="table-auto w-full min-w-max">
-                    <thead>
-                      <tr className="bg-custom-blue-100 text-left text-emphasis-on_surface-high uppercase tracking-wider">
-                        <th className="px-3 py-6 text-sm text-center w-[52px]">
-                          No
-                        </th>
-                        <th className="px-3 py-6 text-sm w-[500px]">
-                          Kelengkapan Dokumen
-                        </th>
-                        <th className="px-3 py-6 text-sm text-center w-[370px]">
-                          Memenuhi
-                        </th>
-                        <th className="px-3 py-6 text-sm text-center w-[370px]">
-                          Tidak Memenuhi
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((item, index) => (
-                        <tr
-                          key={`${item.id_pemeriksaan}-${index}`}
-                          className={`${
-                            index % 2 === 0
-                              ? "bg-custom-neutral-0"
-                              : "bg-custom-neutral-100"
-                          }`}>
-                          <td className="px-3 py-6 text-sm text-center">
-                            {item.no}
+                          <td className="px-3 py-6">
+                            <Field name={`tenaga_kerja.${index}.keterangan`}>
+                              {({ field, form }) => (
+                                <TextInput
+                                  value={field.value}
+                                  onChange={(e) =>
+                                    form.setFieldValue(
+                                      `tenaga_kerja.${index}.keterangan`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Keterangan"
+                                  className="input-field"
+                                  isRequired={true}
+                                  errorMessage={
+                                    form.errors?.tenaga_kerja?.[index]
+                                      ?.keterangan
+                                  }
+                                />
+                              )}
+                            </Field>
                           </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.isTitle ? (
-                              <span className="font-bold">
-                                {item.kelengkapan}
-                              </span>
-                            ) : (
-                              item.kelengkapan
-                            )}
-                          </td>
-                          {!item.isTitle && (
-                            <>
-                              <td className="px-3 py-6 text-sm text-center">
-                                <div className="mt-2">
-                                  <input
-                                    type="radio"
-                                    name={`radio-${item.id_pemeriksaan}`}
-                                    checked={
-                                      radioState[item.id_pemeriksaan]?.memenuhi
-                                    }
-                                    value="memenuhi"
-                                    onChange={() =>
-                                      handleRadioChange(
-                                        item.id_pemeriksaan,
-                                        "memenuhi"
-                                      )
-                                    }
-                                  />
-                                </div>
-                              </td>
-                              <td className="px-3 py-6 text-sm text-center">
-                                <div className="mt-2">
-                                  <input
-                                    type="radio"
-                                    name={`radio-${item.id_pemeriksaan}`}
-                                    checked={
-                                      radioState[item.id_pemeriksaan]
-                                        ?.tidak_memenuhi
-                                    }
-                                    value="tidak_memenuhi"
-                                    onChange={() =>
-                                      handleRadioChange(
-                                        item.id_pemeriksaan,
-                                        "tidak_memenuhi"
-                                      )
-                                    }
-                                  />
-                                </div>
-                              </td>
-                            </>
-                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -1011,21 +1218,17 @@ export default function EntriData() {
             <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
               Blok II: Keterangan Petugas Lapangan
             </h4>
-            {dataEntri && (
-              <PetugasLapanganForm
-                dataEntri={dataEntri}
-                setFieldValue={setFieldValue}
-              />
-            )}
+            <PetugasLapanganForm
+              values={values}
+              setFieldValue={setFieldValue}
+            />
             <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
               Blok III: Keterangan Pemberi Informasi
             </h4>
-            {dataEntri && (
-              <PemberiInformasiForm
-                dataEntri={dataEntri}
-                setFieldValue={setFieldValue}
-              />
-            )}
+            <PemberiInformasiForm
+              values={values}
+              setFieldValue={setFieldValue}
+            />
             <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
               Blok IV: Keterangan Pemberi Informasi
             </h4>
@@ -1046,15 +1249,23 @@ export default function EntriData() {
               setFieldValue={setFieldValue}
               hide={selectedValue !== 2}
             />
-            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
-              Blok V: Verifikasi Dokumen
-            </h4>
-            <VerifikasiDokumenForm
-              values={values}
-              setFieldValue={setFieldValue}
-            />
             <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-              <Button variant="solid_blue" size="Medium" type="submit">
+              <Button
+                variant="outlined_yellow"
+                size="Medium"
+                type="submit"
+                onClick={() => setCurrentAction("draft")}
+                name="action"
+                value="draft">
+                Simpan sebagai Draf
+              </Button>
+              <Button
+                variant="solid_blue"
+                size="Medium"
+                type="submit"
+                onClick={() => setCurrentAction("save")}
+                name="action"
+                value="save">
                 Simpan
               </Button>
             </div>
