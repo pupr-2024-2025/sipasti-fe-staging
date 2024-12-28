@@ -6,18 +6,21 @@ const entri_dataStore = create((set) => ({
   userOptions: [],
   pengawasUserOptions: [],
   initialValues: {
-    petugas_lapangan: "",
-    tanggal_survei: "",
-    nip: "",
-    nip_pengawas: "",
-    materials: [],
-    peralatans: [],
-    tenaga_Kerjas: [],
+    user_id_petugas_lapangan: "",
+    user_id_pengawas: "",
+    nama_pemberi_informasi: "",
+    data_vendor_id: "",
+    identifikasi_kebutuhan_id: "",
+    material: [],
+    peralatan: [],
+    tenaga_kerja: [],
   },
   dataEntri: null,
-  materials: null,
-  peralatans: null,
-  tenaga_Kerjas: null,
+  material: null,
+  peralatan: null,
+  tenaga_kerja: null,
+  data_vendor_id: "",
+  identifikasi_kebutuhan_id: "",
   setSelectedValue: (value) => set({ selectedValue: value }),
   fetchData: async (id) => {
     try {
@@ -25,13 +28,23 @@ const entri_dataStore = create((set) => ({
         `https://api-ecatalogue-staging.online/api/pengumpulan-data/get-entri-data/${id}`
       );
       const data = response.data.data;
-      set({
+
+      set((state) => ({
         dataEntri: data,
-        materials: data.material,
-        peralatans: data.peralatan,
-        tenaga_Kerjas: data.tenaga_kerja,
-      });
-      console.log("API Response:", data);
+        material: data.material || [],
+        peralatan: data.peralatan || [],
+        tenaga_kerja: data.tenaga_kerja || [],
+        initialValues: {
+          ...state.initialValues,
+          data_vendor_id: data.data_vendor_id || "",
+          identifikasi_kebutuhan_id: data.identifikasi_kebutuhan_id || "",
+        },
+        data_vendor_id: data.data_vendor_id || "",
+        identifikasi_kebutuhan_id: data.identifikasi_kebutuhan_id || "",
+      }));
+
+      console.log("identifikasi_kebutuhan_id:", data.identifikasi_kebutuhan_id);
+      console.log("data_vendor_id:", data.data_vendor_id);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
