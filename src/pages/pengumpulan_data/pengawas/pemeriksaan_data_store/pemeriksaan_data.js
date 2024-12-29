@@ -1,13 +1,75 @@
 // store/index.js
 import { create } from "zustand";
+import axios from "axios";
+// import { fetchDataEntriData } from "../../../../services/api";
 
-export const useStore = create((set) => ({
+export const testStore = create((set) => ({
+  selectedValue: 0,
+  userOptions: [],
+  pengawasUserOptions: [],
+  dataEntri: null,
+  initialValues: {
+    user_id_petugas_lapangan: "",
+    user_id_pengawas: "",
+  },
+  material: null,
+  peralatan: null,
+  tenaga_kerja: null,
+  setSelectedValue: (value) => set({ selectedValue: value }),
+  fetchUserOptions: async () => {
+    try {
+      const response = await axios.get(
+        "http://api-ecatalogue-staging.online/api/pengumpulan-data/list-user"
+      );
+      const options =
+        response.data?.data.map((user) => ({
+          value: user.user_id,
+          label: user.nama_lengkap,
+        })) || [];
+      set({ userOptions: options });
+      console.log("User options berhasil diambil:", options);
+    } catch (error) {
+      console.error(
+        "Error fetching user options:",
+        error.response?.data || error.message
+      );
+    }
+  },
+
+  fetchDataEntriData: async (id) => {
+    try {
+      const response = await axios.get(
+        `https://api-ecatalogue-staging.online/api/pengumpulan-data/get-entri-data/${id}`
+      );
+      const data = response.data.data;
+
+      set((state) => ({
+        dataEntri: data,
+        material: data.material || [],
+        peralatan: data.peralatan || [],
+        tenaga_kerja: data.tenaga_kerja || [],
+        initialValues: {
+          ...state.initialValues,
+          data_vendor_id: data.data_vendor_id || "",
+          identifikasi_kebutuhan_id: data.identifikasi_kebutuhan_id || "",
+        },
+        data_vendor_id: data.data_vendor_id || "",
+        identifikasi_kebutuhan_id: data.identifikasi_kebutuhan_id || "",
+      }));
+
+      console.log("identifikasi_kebutuhan_id:", data.identifikasi_kebutuhan_id);
+      console.log("data_vendor_id:", data.data_vendor_id);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  },
+
   userRole: "pengawas",
   data: [
     {
       nomor: "A",
       kelengkapan_dokumen: "KRITERIA VERIFIKASI",
-      id_pemeriksaan: null,
+      id_pemeriksaan: "null",
       // status_pemeriksaan: null,
       verified_by: null,
     },
@@ -53,7 +115,7 @@ export const useStore = create((set) => ({
     {
       nomor: "B",
       kelengkapan_dokumen: "KRITERIA VALIDASI",
-      id_pemeriksaan: null,
+      id_pemeriksaan: "null2",
       // status_pemeriksaan: null,
       verified_by: null,
     },

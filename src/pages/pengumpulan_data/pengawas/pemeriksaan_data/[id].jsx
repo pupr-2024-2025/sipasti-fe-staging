@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Field, FieldArray, Form, Formik } from "formik";
-import { useStore } from "zustand";
 import Navbar from "../../../../components/navigationbar";
-import CustomAlert from "../../../../components/alert";
-import TextInput from "../../../../components/input";
-import entri_dataStore from "../pemeriksaan_store/pemeriksaan_data";
-import informasi_tahap_pengumpulanStore from "../informasi_tahap_pengumpulan/informasi_tahap_pengumpulan";
-import SearchBox from "../../../../components/searchbox";
 import Button from "../../../../components/button";
 import Dropdown from "../../../../components/dropdown";
-import RadioButton from "../../../../components/radiobutton";
+import { testStore } from "../pemeriksaan_data_store/pemeriksaan_data";
+import { submitData } from "../../../../services/api";
+import FileInput from "../../../../components/FileInput";
+import TextInput from "../../../../components/input";
+import SearchBox from "../../../../components/searchbox";
+import { useStore } from "zustand";
 import dayjs from "dayjs";
+import CustomAlert from "../../../../components/alert";
 import { useRouter } from "next/router";
-import axios from "axios";
 
 import "dayjs/locale/id";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -21,305 +20,438 @@ import { DatePicker } from "@mui/x-date-pickers";
 
 dayjs.locale("id");
 
-export default function EntriData() {
-  const [radioState, setRadioState] = useState({});
-  const [date, setDate] = useState(null);
-  const [error, setError] = useState(false);
-  const [helperText, setHelperText] = useState("");
+function App() {
+  const [berita_acara, setBerita_Acara] = useState(null);
+  const [selectedberitaacara, setselectedBeritaAcara] = useState(null);
+  const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
   const {
     selectedValue,
-    userOptions,
-    pengawasUserOptions,
-    fetchPengawasUserOptions,
-    fetchUserOptions,
-    initialValues,
-    material,
-    peralatan,
-    tenaga_kerja,
-    dataEntri,
-    fetchData,
     setSelectedValue,
     data_vendor_id,
     identifikasi_kebutuhan_id,
-  } = useStore(entri_dataStore);
+    data,
+    userOptions,
+    pengawasUserOptions,
+    setData,
+    material,
+    peralatan,
+    tenaga_kerja,
+    updateStatus,
+    dataEntri,
+    fetchDataEntriData,
+  } = useStore(testStore);
 
   const router = useRouter();
   const { id } = router.query;
 
-  useEffect(() => {
-    fetchUserOptions();
-  }, [fetchUserOptions]);
-
-  useEffect(() => {
-    fetchPengawasUserOptions();
-  }, [fetchPengawasUserOptions]);
-
-  const [alertInfo, setAlertInfo] = useState({
-    open: false,
-    severity: "info",
+  const [alert, setAlert] = useState({
     message: "",
+    severity: "",
+    open: false,
   });
 
-  const handleAlertClose = () => {
-    setAlertInfo((prev) => ({ ...prev, open: false }));
-  };
-
-  const handleSubmit = async (values) => {
-    console.log("Values sebelum validasi:", values);
-
-    // Persiapkan payload yang akan dikirim ke API
-    const payload = {
-      ...values,
-      data_vendor_id,
-      identifikasi_kebutuhan_id,
-      verifikasi_validasi: Object.keys(radioState).map((id_pemeriksaan) => ({
-        id_pemeriksaan,
-        status_pemeriksaan: radioState[id_pemeriksaan].memenuhi
-          ? "memenuhi"
-          : "tidak_memenuhi",
-        verified_by: "pengawas",
-      })),
-    };
-
-    console.log("Payload yang akan dikirim ke API:", payload);
-
-    try {
-      // Kirim data ke API
-      const response = await axios.post(
-        "https://api-ecatalogue-staging.online/api/pengumpulan-data/verifikasi-pengawas",
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("Response dari API:", response.data);
-
-      // Cek status response
-      if (response.status === 200) {
-        const identifikasiKebutuhanId =
-          response.data?.data?.material?.[0]?.identifikasi_kebutuhan_id ?? 0;
-
-        console.log(
-          "ID Identifikasi Kebutuhan yang disimpan ke localStorage:",
-          identifikasiKebutuhanId
-        );
-
-        localStorage.setItem(
-          "identifikasi_kebutuhan_id",
-          identifikasiKebutuhanId
-        );
-
-        setAlertInfo({
-          open: true,
-          severity: "success",
-          message: "Data berhasil disimpan!",
-        });
-
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error saat submit data ke API:", error);
-
-      const errorMessage =
-        error.response?.data?.message ??
-        "Gagal menyimpan data. Silakan coba lagi.";
-      setAlertInfo({
-        open: true,
-        severity: "error",
-        message: errorMessage,
-      });
-    }
-
-    console.log("Data berhasil disimpan ke state:", values);
-  };
-
-  const handleDateChange = (newDate) => {
-    console.log("Tanggal yang dipilih di DatePicker:", newDate);
-    if (!newDate) {
-      setError(true);
-      setHelperText("Tanggal harus diisi");
-    } else {
-      setError(false);
-      setHelperText("");
-      setFieldValue("tanggal_survei", newDate);
-    }
-  };
+  // useEffect(() => {
+  //   fetchDataEntriData(136);
+  // }, [fetchDataEntriData]);
 
   useEffect(() => {
     if (id) {
       console.log("shortlist_id yang dikirim:", id);
-      fetchData(id);
+      fetchDataEntriData(id);
     }
-  }, [id, fetchData]);
+  }, [id, fetchDataEntriData]);
 
-  // useEffect(() => {
-  //   fetchData(136);
-  // }, [fetchData]);
-  console.log("dataEntri:", dataEntri);
-  const PemberiInformasiForm = ({ dataEntri, setFieldValue }) => {
+  //   fetchData();
+  // }, [setData]);
+
+  const handleCancelBeritaAcara = () => {
+    console.log("Cancelling file upload...");
+
+    setBerita_Acara(null);
+    setselectedBeritaAcara(null);
+
+    setProgress(0);
+    setBeritaAcaraState("default");
+
+    setError("");
+  };
+
+  const [beritaacarastate, setBeritaAcaraState] = useState("default");
+
+  const handleChange = (id_pemeriksaan, status) => {
+    updateStatus(id_pemeriksaan, status);
+  };
+
+  const isSubmitDisabled = data.some(
+    (item) => item.status_pemeriksaan === null
+  );
+
+  const handleSubmit = async (values) => {
+    console.log("Nilai catatan_blok_1:", values.catatan_blok_1);
+    try {
+      const verifikasiValidasi = data
+        .filter((item) => item.verified_by !== null)
+        .map((item) => ({
+          id_pemeriksaan: item.id_pemeriksaan,
+          status_pemeriksaan: item.status_pemeriksaan || "Belum Dipilih",
+          verified_by: item.verified_by,
+        }));
+
+      const payload = new FormData();
+      payload.append("identifikasi_kebutuhan_id", identifikasi_kebutuhan_id);
+      payload.append("data_vendor_id", data_vendor_id);
+      payload.append("catatan_blok_1", values.catatan_blok_1 || "");
+      payload.append("catatan_blok_2", values.catatan_blok_2 || "");
+      payload.append("catatan_blok_3", values.catatan_blok_3 || "");
+      payload.append("catatan_blok_4", values.catatan_blok_4 || "");
+      payload.append("berita_acara", selectedberitaacara);
+      payload.append("verifikasi_validasi", JSON.stringify(verifikasiValidasi));
+
+      console.log("Payload yang dikirim:");
+      payload.forEach((value, key) => {
+        console.log(key, value);
+      });
+
+      // Sending data to the API
+      const response = await submitData(payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      console.log("Response from API:", response);
+
+      // Check the response status and set the alert accordingly
+      if (response.status === "success") {
+        setAlert({
+          message: "Data berhasil dikirim!",
+          severity: "success",
+          open: true,
+        });
+      } else if (response.status === "error") {
+        // If response.message is an array, show the first item
+        const errorMessage = Array.isArray(response.message)
+          ? response.message[0]
+          : response.message || "Something went wrong";
+
+        setAlert({
+          message: `Error: ${errorMessage}`,
+          severity: "error",
+          open: true,
+        });
+      } else {
+        // If the response status is unknown or not "error" or "success"
+        setAlert({
+          message: "Terjadi kesalahan yang tidak terduga.",
+          severity: "error",
+          open: true,
+        });
+      }
+    } catch (error) {
+      console.error("Gagal mengirim data:", error);
+      setAlert({
+        message: "Gagal mengirim data, coba lagi.",
+        severity: "error",
+        open: true,
+      });
+    }
+  };
+
+  const handleBeritaAcara = (files) => {
+    if (files.length === 0) {
+      setError("File wajib dipilih.");
+      return;
+    }
+
+    const file = files[0];
+    setselectedBeritaAcara(file);
+    setBeritaAcaraState("processing");
+    setError("");
+    try {
+      setselectedBeritaAcara(file);
+      setBeritaAcaraState("done");
+    } catch (error) {
+      console.error("Error processing logo file:", error);
+      setBeritaAcaraState("default");
+    }
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setBeritaAcaraState("done");
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
+  };
+
+  const KeteranganTempatForm = ({ values, setFieldValue }) => {
     return (
-      <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
-        <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-          <div className="space-y-8">
-            <TextInput
-              label="Nama Pemberi Informasi / Jabatan"
-              labelPosition="left"
-              placeholder="Nama Pemberi Informasi / Jabatan tidak ada"
-              size="Medium"
-              errorMessage="Nama pemberi informasi / jabatan tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_pemberi_informasi
-                  ?.nama_pemberi_informasi || ""
-              }
-              disabledActive={true}
-            />
-            <TextInput
-              label="Tanda Tangan Responden"
-              labelPosition="left"
-              placeholder="Tanda Tangan Responden tidak ada"
-              size="Medium"
-              disabledActive={true}
-              errorMessage="Tanda tangan responden tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_pemberi_informasi
-                  ?.tanda_tangan_responden || ""
-              }
-            />
-          </div>
+      <div>
+        <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
+          <TextInput
+            label="Provinsi"
+            labelPosition="left"
+            placeholder="Masukkan Provinsi"
+            size="Medium"
+            labelWidth="100px"
+            disabledActive={true}
+            value={dataEntri?.provinsi || ""}
+          />
+          <TextInput
+            label="Kabupaten/Kota"
+            labelPosition="left"
+            placeholder="Masukkan Kabupaten/Kota"
+            size="Medium"
+            labelWidth="100px"
+            disabledActive={true}
+            value={dataEntri?.kota || ""}
+          />
+          <TextInput
+            label="Nama Responden/Vendor"
+            labelPosition="left"
+            placeholder="Masukkan Nama Responden/Vendor"
+            size="Medium"
+            labelWidth="100px"
+            disabledActive={true}
+            value={dataEntri?.nama_responden || ""}
+          />
+          <TextInput
+            label="Alamat Responden/Geo-tagging"
+            labelPosition="left"
+            placeholder="Masukkan Alamat"
+            size="Medium"
+            labelWidth="100px"
+            disabledActive={true}
+            value={dataEntri?.alamat || ""}
+            // labelMargin="150px"
+          />
+          <TextInput
+            label="Nomor Telepon/HP /E-mail"
+            labelPosition="left"
+            placeholder="Masukkan Nomor Kontak"
+            size="Medium"
+            labelWidth="100px"
+            disabledActive={true}
+            value={dataEntri?.no_telepon || ""}
+          />
+          <TextInput
+            label="Kategori Responden /Vendor"
+            labelPosition="left"
+            placeholder="Masukkan Kategori"
+            size="Medium"
+            labelWidth="100px"
+            disabledActive={true}
+            value={dataEntri?.kategori_responden || ""}
+          />
         </div>
-      </LocalizationProvider>
+        <TextInput
+          className="my-3"
+          label="Catatan Blok I"
+          placeholder="Masukkan Catatan Blok I"
+          size="Medium"
+          errorMessage="Catatan Blok I tidak boleh kosong"
+          // value={values.catatan_blok_1 || ""}
+          onChange={(e) => {
+            setFieldValue("catatan_blok_1", e.target.value);
+          }}
+        />
+      </div>
     );
   };
-  const PetugasLapanganForm = ({ dataEntri, setFieldValue }) => {
-    console.log("Data Entri di petugas lapangan:", dataEntri);
+
+  const KeteranganPetugasLapanganForm = ({ values, setFieldValue }) => {
     return (
-      <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
-        <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-          <div className="space-y-8">
-            <TextInput
-              label="Nama Petugas Lapangan"
-              labelPosition="left"
-              placeholder="Nama Petugas Lapangan tidak ada"
-              size="Medium"
-              errorMessage="Nama Petugas Lapangan tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_petugas_lapangan?.nama_petugas_lapangan ||
-                ""
-              }
-              disabledActive={true}
-            />
-
-            <TextInput
-              label="NIP Petugas Lapangan"
-              labelPosition="left"
-              placeholder="NIP Petugas Lapangan tidak ada"
-              size="Medium"
-              errorMessage="NIP Petugas Lapangan tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_petugas_lapangan?.nip_petugas_lapangan ||
-                ""
-              }
-              disabledActive={true}
-            />
-
-            <div
-              style={{ display: "flex", alignItems: "center", gap: "256px" }}>
-              <div className="text-B2" style={{ minWidth: "200px" }}>
-                Tanggal Survei
-              </div>
-              <DatePicker
-                label="Tanggal Survei"
+      <div>
+        <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
+          <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
+            <div className=" space-y-8">
+              <TextInput
+                label="Nama Petugas Lapangan"
+                labelPosition="left"
+                placeholder="Nama Petugas Lapangan kosong"
+                size="Medium"
+                errorMessage="Nama Petugas Lapangan kosong"
                 value={
-                  dataEntri?.keterangan_petugas_lapangan?.tanggal_survei
-                    ? dayjs(
-                        dataEntri.keterangan_petugas_lapangan.tanggal_survei,
-                        "DD-MM-YYYY"
-                      )
-                    : null
+                  dataEntri?.keterangan_petugas_lapangan
+                    ?.nama_petugas_lapangan || ""
                 }
-                onChange={(date) => {
-                  const formattedDate = date.format("DD-MM-YYYY");
-                  setFieldValue("tanggal_survei", formattedDate);
-                }}
-                slotProps={{
-                  textField: {
-                    error: false,
-                    helperText: "",
-                    fullWidth: true,
-                  },
-                }}
-                localeText={{
-                  cancelButtonLabel: "Batal",
-                  okButtonLabel: "Pilih",
-                }}
-                disabled
+                disabledActive={true}
               />
-            </div>
-
-            <TextInput
-              label="Nama Pengawas"
-              labelPosition="left"
-              placeholder="Nama Pengawas tidak ada"
-              size="Medium"
-              errorMessage="Nama Pengawas tidak boleh kosong"
-              value={
-                dataEntri?.keterangan_petugas_lapangan?.nama_pengawas || ""
-              }
-              disabledActive={true}
-            />
-
-            <TextInput
-              label="NIP Pengawas"
-              labelPosition="left"
-              placeholder="NIP Pengawas tidak ada"
-              size="Medium"
-              errorMessage="NIP Pengawas tidak boleh kosong"
-              value={dataEntri?.keterangan_petugas_lapangan?.nip_pengawas || ""}
-              disabledActive={true}
-            />
-
-            <div
-              style={{ display: "flex", alignItems: "center", gap: "256px" }}>
-              <div className="text-B2" style={{ minWidth: "200px" }}>
-                Tanggal Pengawasan
-              </div>
-              <DatePicker
-                label="Tanggal Pengawasan"
+              <TextInput
+                label="NIP"
+                labelPosition="left"
+                placeholder="NIP kosong"
+                size="Medium"
+                errorMessage="NIP kosong"
                 value={
-                  dataEntri?.keterangan_petugas_lapangan?.tanggal_pengawasan
-                    ? dayjs(
-                        dataEntri.keterangan_petugas_lapangan
-                          .tanggal_pengawasan,
-                        "DD-MM-YYYY"
-                      )
-                    : null
+                  dataEntri?.keterangan_petugas_lapangan
+                    ?.nip_petugas_lapangan || ""
                 }
-                onChange={(date) => {
-                  const formattedDate = date.format("DD-MM-YYYY");
-                  setFieldValue("tanggal_pengawasan", formattedDate);
-                }}
-                slotProps={{
-                  textField: {
-                    error: false,
-                    helperText: "",
-                    fullWidth: true,
-                  },
-                }}
-                localeText={{
-                  cancelButtonLabel: "Batal",
-                  okButtonLabel: "Pilih",
-                }}
-                disabled
+                disabledActive={true}
+              />
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "256px" }}
+              >
+                <div className="text-B2" style={{ minWidth: "200px" }}>
+                  Tanggal Survei
+                </div>
+                <DatePicker
+                  label="Tanggal Survei"
+                  value={
+                    dataEntri?.keterangan_petugas_lapangan?.tanggal_survei
+                      ? dayjs(
+                          dataEntri.keterangan_petugas_lapangan.tanggal_survei,
+                          "DD-MM-YYYY"
+                        )
+                      : null
+                  }
+                  disabled={true}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                    },
+                  }}
+                  localeText={{
+                    cancelButtonLabel: "Batal",
+                    okButtonLabel: "Pilih",
+                  }}
+                />
+              </div>
+              <TextInput
+                label="Nama Pengawas"
+                labelPosition="left"
+                placeholder="Nama Pengawas kosong"
+                size="Medium"
+                errorMessage="Nama Pengawas kosong"
+                value={
+                  dataEntri?.keterangan_petugas_lapangan?.nama_pengawas || ""
+                }
+                disabledActive={true}
+              />
+              <TextInput
+                label=" Pengawas"
+                labelPosition="left"
+                placeholder=" Pengawas kosong"
+                size="Medium"
+                errorMessage=" Pengawas kosong"
+                value={
+                  dataEntri?.keterangan_petugas_lapangan?.nip_pengawas || ""
+                }
+                disabledActive={true}
+              />
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "256px" }}
+              >
+                <div className="text-B2" style={{ minWidth: "200px" }}>
+                  Tanggal Pengawasan
+                </div>
+                <DatePicker
+                  label="Tanggal Pengawasan"
+                  value={
+                    dataEntri?.keterangan_petugas_lapangan?.tanggal_pengawasan
+                      ? dayjs(
+                          dataEntri.keterangan_petugas_lapangan
+                            .tanggal_pengawasan,
+                          "DD-MM-YYYY"
+                        )
+                      : null
+                  }
+                  disabled={true}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                    },
+                  }}
+                  localeText={{
+                    cancelButtonLabel: "Batal",
+                    okButtonLabel: "Pilih",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </LocalizationProvider>
+        <TextInput
+          className="my-3"
+          label="Catatan Blok II"
+          placeholder="Masukkan Catatan Blok II"
+          size="Medium"
+          errorMessage="Catatan Blok II tidak boleh kosong"
+          onChange={(e) => {
+            setFieldValue("catatan_blok_2", e.target.value);
+          }}
+        />
+      </div>
+    );
+  };
+
+  const KeteranganPemberiInformasiForm = ({ values, setFieldValue }) => {
+    return (
+      <div>
+        <LocalizationProvider dateAdapter={AdapterDayjs} locale="id">
+          <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
+            <div className=" space-y-8">
+              <TextInput
+                label="Nama Pemberi Informasi/Jabatan"
+                labelPosition="left"
+                placeholder="Nama Pemberi Informasi/Jabatan kosong"
+                size="Medium"
+                errorMessage="Nama Pemberi Informasi/Jabatan kosong"
+                value={
+                  dataEntri?.keterangan_pemberi_informasi
+                    ?.nama_pemberi_informasi || ""
+                }
+                disabledActive={true}
+              />
+              <TextInput
+                label="Tanda Tangan Responden"
+                labelPosition="left"
+                placeholder="Tanda Tangan Responden kosong"
+                size="Medium"
+                errorMessage="Tanda Tangan Responden kosong"
+                value={
+                  dataEntri?.keterangan_pemberi_informasi
+                    ?.tanda_tangan_responden || ""
+                }
+                disabledActive={true}
               />
             </div>
           </div>
-        </div>
-      </LocalizationProvider>
+        </LocalizationProvider>
+        <TextInput
+          className="my-3"
+          label="Catatan Blok III"
+          placeholder="Masukkan Catatan Blok III"
+          size="Medium"
+          errorMessage="Catatan Blok III tidak boleh kosong"
+          // value={values.catatan_blok_3 || ""}
+          onChange={(e) => {
+            setFieldValue("catatan_blok_3", e.target.value);
+          }}
+        />
+      </div>
+    );
+  };
+
+  const KeteranganMaterialPeralatanTenagaKerjaForm = ({
+    values,
+    setFieldValue,
+  }) => {
+    return (
+      <div>
+        <TextInput
+          className="my-3"
+          label="Catatan Blok IV"
+          placeholder="Masukkan Catatan Blok IV"
+          size="Medium"
+          errorMessage="Catatan Blok IV tidak boleh kosong"
+          // value={values.catatan_blok_4 || ""}
+          onChange={(e) => {
+            setFieldValue("catatan_blok_4", e.target.value);
+          }}
+        />
+      </div>
     );
   };
 
@@ -422,66 +554,78 @@ export default function EntriData() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedMaterial.map((item, index) => (
-                        <tr
-                          key={item.id}
-                          className={`${
-                            index % 2 === 0
-                              ? "bg-custom-neutral-0"
-                              : "bg-custom-neutral-100"
-                          }`}>
-                          <td className="px-3 py-6 text-sm text-center">
-                            {(currentPage - 1) * itemsPerPage + index + 1}
+                      {paginatedMaterial.length > 0 ? (
+                        paginatedMaterial.map((item, index) => (
+                          <tr
+                            key={item.id}
+                            className={`${
+                              index % 2 === 0
+                                ? "bg-custom-neutral-0"
+                                : "bg-custom-neutral-100"
+                            }`}
+                          >
+                            <td className="px-3 py-6 text-sm text-center">
+                              {(currentPage - 1) * itemsPerPage + index + 1}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.nama_material}
+                            </td>
+                            <td className="px-3 py-6 text-sm">{item.satuan}</td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.spesifikasi}
+                            </td>
+                            <td className="px-3 py-6 text-sm">{item.ukuran}</td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.kodefikasi}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.kelompok_material}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.jumlah_kebutuhan}
+                            </td>
+                            <td className="px-3 py-6 text-sm">{item.merk}</td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.provincies_id}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.cities_id}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.satuan_setempat}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.satuan_setempat_panjang}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.satuan_setempat_lebar}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.satuan_setempat_tinggi}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.konversi_satuan_setempat}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.harga_satuan_setempat}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.harga_konversi_satuan_setempat}
+                            </td>
+                            <td className="px-3 py-6">{item.harga_khusus}</td>
+                            <td className="px-3 py-6">{item.keterangan}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            className="px-3 py-6 text-B1 text-center text-emphasis-on_surface-medium"
+                            colSpan="20"
+                          >
+                            Tidak ada data tersedia
                           </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.nama_material}
-                          </td>
-                          <td className="px-3 py-6 text-sm">{item.satuan}</td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.spesifikasi}
-                          </td>
-                          <td className="px-3 py-6 text-sm">{item.ukuran}</td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.kodefikasi}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.kelompok_material}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.jumlah_kebutuhan}
-                          </td>
-                          <td className="px-3 py-6 text-sm">{item.merk}</td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.provincies_id}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.cities_id}
-                          </td>
-                          <td className="px-3 py-6">{item.satuan_setempat}</td>
-                          <td className="px-3 py-6">
-                            {item.satuan_setempat_panjang}
-                          </td>
-                          <td className="px-3 py-6">
-                            {item.satuan_setempat_lebar}
-                          </td>
-                          <td className="px-3 py-6">
-                            {item.satuan_setempat_tinggi}
-                          </td>
-                          <td className="px-3 py-6">
-                            {item.konversi_satuan_setempat_ke_satuan_standar}
-                          </td>
-                          <td className="px-3 py-6">
-                            {item.harga_per_satuan_setempat}
-                          </td>
-                          <td className="px-3 py-6">
-                            {
-                              item.harga_konversi_satuan_setempat_ke_satuan_standar
-                            }
-                          </td>
-                          <td className="px-3 py-6">{item.harga_khusus}</td>
-                          <td className="px-3 py-6">{item.keterangan}</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -579,54 +723,68 @@ export default function EntriData() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedPeralatan.map((item, index) => (
-                        <tr
-                          key={item.id}
-                          className={`${
-                            index % 2 === 0
-                              ? "bg-custom-neutral-0"
-                              : "bg-custom-neutral-100"
-                          }`}>
-                          <td className="px-3 py-6 text-sm text-center">
-                            {(currentPage - 1) * itemsPerPage + index + 1}
+                      {paginatedPeralatan.length > 0 ? (
+                        paginatedPeralatan.map((item, index) => (
+                          <tr
+                            key={item.id}
+                            className={`${
+                              index % 2 === 0
+                                ? "bg-custom-neutral-0"
+                                : "bg-custom-neutral-100"
+                            }`}
+                          >
+                            <td className="px-3 py-6 text-sm text-center">
+                              {(currentPage - 1) * itemsPerPage + index + 1}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.nama_peralatan}
+                            </td>
+                            <td className="px-3 py-6 text-sm">{item.satuan}</td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.spesifikasi}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.kapasitas}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.kodefikasi}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.kelompok_peralatan}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.jumlah_kebutuhan}
+                            </td>
+                            <td className="px-3 py-6 text-sm">{item.merk}</td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.provincies_id}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.cities_id}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.satuan_setempat}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.harga_satuan_setempat}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.harga_sewa_konversi}
+                            </td>
+                            <td className="px-3 py-6">{item.harga_pokok}</td>
+                            <td className="px-3 py-6">{item.keterangan}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            className="px-3 py-6 text-B1 text-center text-emphasis-on_surface-medium"
+                            colSpan="16"
+                          >
+                            Tidak ada data tersedia
                           </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.nama_peralatan}
-                          </td>
-                          <td className="px-3 py-6 text-sm">{item.satuan}</td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.spesifikasi}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.kapasitas}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.kodefikasi}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.kelompok_peralatan}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.jumlah_kebutuhan}
-                          </td>
-                          <td className="px-3 py-6 text-sm">{item.merk}</td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.provincies_id}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.cities_id}
-                          </td>
-                          <td className="px-3 py-6">{item.satuan_setempat}</td>
-                          <td className="px-3 py-6">
-                            {item.harga_sewa_satuan_setempat}
-                          </td>
-                          <td className="px-3 py-6">
-                            {item.harga_sewa_konversi}
-                          </td>
-                          <td className="px-3 py-6">{item.harga_pokok}</td>
-                          <td className="px-3 py-6">{item.keterangan}</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -637,6 +795,7 @@ export default function EntriData() {
       </div>
     );
   };
+
   const TenagaKerjaForm = ({ hide }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -705,226 +864,54 @@ export default function EntriData() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedTenaga_kerja.map((item, index) => (
-                        <tr
-                          key={item.id}
-                          className={`${
-                            index % 2 === 0
-                              ? "bg-custom-neutral-0"
-                              : "bg-custom-neutral-100"
-                          }`}>
-                          <td className="px-3 py-6 text-sm text-center">
-                            {(currentPage - 1) * itemsPerPage + index + 1}
+                      {paginatedTenaga_kerja.length > 0 ? (
+                        paginatedTenaga_kerja.map((item, index) => (
+                          <tr
+                            key={item.id}
+                            className={`${
+                              index % 2 === 0
+                                ? "bg-custom-neutral-0"
+                                : "bg-custom-neutral-100"
+                            }`}
+                          >
+                            <td className="px-3 py-6 text-sm text-center">
+                              {(currentPage - 1) * itemsPerPage + index + 1}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.jenis_tenaga_kerja}
+                            </td>
+                            <td className="px-3 py-6 text-sm">{item.satuan}</td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.jumlah_kebutuhan}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.kodefikasi}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.provincies_id}
+                            </td>
+                            <td className="px-3 py-6 text-sm">
+                              {item.cities_id}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.harga_per_satuan_setempat}
+                            </td>
+                            <td className="px-3 py-6">
+                              {item.harga_konversi_perjam}
+                            </td>
+                            <td className="px-3 py-6">{item.keterangan}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            className="px-3 py-6 text-B1 text-center text-emphasis-on_surface-medium"
+                            colSpan="10"
+                          >
+                            Tidak ada data tersedia
                           </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.jenis_tenaga_kerja}
-                          </td>
-                          <td className="px-3 py-6 text-sm">{item.satuan}</td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.jumlah_kebutuhan}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.kodefikasi}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.provincies_id}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.cities_id}
-                          </td>
-                          <td className="px-3 py-6">
-                            {item.harga_per_satuan_setempat}
-                          </td>
-                          <td className="px-3 py-6">
-                            {item.harga_konversi_per_jam}
-                          </td>
-                          <td className="px-3 py-6">{item.keterangan}</td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-        </FieldArray>
-      </div>
-    );
-  };
-
-  const VerifikasiDokumenForm = ({ hide }) => {
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-
-    const staticData = [
-      {
-        id_pemeriksaan: "A",
-        no: "A",
-        kelengkapan: "KRITERIA VERIFIKASI",
-        isTitle: true,
-      },
-      {
-        id_pemeriksaan: "A1",
-        no: 1,
-        kelengkapan: "Memeriksa kelengkapan data dan ada tidaknya bukti dukung",
-      },
-      {
-        id_pemeriksaan: "A2",
-        no: 2,
-        kelengkapan:
-          "Jenis material, peralatan, tenaga kerja yang dilakukan pengumpulan data berdasarkan identifikasi kebutuhan.",
-      },
-      { id_pemeriksaan: "A3", no: 3, kelengkapan: "Sumber harga pasar." },
-      {
-        id_pemeriksaan: "A4",
-        no: 4,
-        kelengkapan:
-          "Harga survei didapat minimal 3 vendor untuk setiap jenis material peralatan atau sesuai dengan kondisi di lapangan.",
-      },
-      {
-        id_pemeriksaan: "A5",
-        no: 5,
-        kelengkapan: "Khusus peralatan mencantumkan harga beli dan harga sewa.",
-      },
-      {
-        id_pemeriksaan: "B",
-        no: "B",
-        kelengkapan: "KRITERIA VALIDASI",
-        isTitle: true,
-      },
-      {
-        id_pemeriksaan: "B1",
-        no: 1,
-        kelengkapan:
-          "Kuesioner terisi lengkap dan sesuai dengan petunjuk cara pengisian kuesioner (lampiran iv) dan sudah ditandatangani Responden, Petugas Lapangan, dan Pengawas.",
-      },
-      {
-        id_pemeriksaan: "B2",
-        no: 2,
-        kelengkapan:
-          "Pemeriksaan dilakukan dengan diskusi/tatap muka antara Pengawas dan Petugas Lapangan.",
-      },
-    ];
-
-    const [radioState, setRadioState] = useState(
-      staticData.reduce((acc, item) => {
-        acc[item.id] = {
-          memenuhi: false,
-          tidak_memenuhi: false,
-        };
-        return acc;
-      }, {})
-    );
-
-    const handleRadioChange = (id_pemeriksaan, type) => {
-      console.log(
-        `Radio button changed: id_pemeriksaan=${id_pemeriksaan}, type=${type}`
-      );
-      setRadioState((prevState) => ({
-        ...prevState,
-        [id_pemeriksaan]: {
-          memenuhi: type === "memenuhi",
-          tidak_memenuhi: type === "tidak_memenuhi",
-        },
-      }));
-    };
-
-    console.log("radio state", radioState);
-
-    const paginatedData =
-      staticData?.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      ) || [];
-
-    return (
-      <div className={`${hide ? "hidden" : ""}`}>
-        <FieldArray name="VerifikasiDokumenForm">
-          {({ push, remove }) => (
-            <div>
-              <div className="rounded-[16px] border border-gray-200 overflow-hidden mt-4">
-                <div className="overflow-x-auto">
-                  <table className="table-auto w-full min-w-max">
-                    <thead>
-                      <tr className="bg-custom-blue-100 text-left text-emphasis-on_surface-high uppercase tracking-wider">
-                        <th className="px-3 py-6 text-sm text-center w-[52px]">
-                          No
-                        </th>
-                        <th className="px-3 py-6 text-sm w-[500px]">
-                          Kelengkapan Dokumen
-                        </th>
-                        <th className="px-3 py-6 text-sm text-center w-[370px]">
-                          Memenuhi
-                        </th>
-                        <th className="px-3 py-6 text-sm text-center w-[370px]">
-                          Tidak Memenuhi
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedData.map((item, index) => (
-                        <tr
-                          key={`${item.id_pemeriksaan}-${index}`}
-                          className={`${
-                            index % 2 === 0
-                              ? "bg-custom-neutral-0"
-                              : "bg-custom-neutral-100"
-                          }`}>
-                          <td className="px-3 py-6 text-sm text-center">
-                            {item.no}
-                          </td>
-                          <td className="px-3 py-6 text-sm">
-                            {item.isTitle ? (
-                              <span className="font-bold">
-                                {item.kelengkapan}
-                              </span>
-                            ) : (
-                              item.kelengkapan
-                            )}
-                          </td>
-                          {!item.isTitle && (
-                            <>
-                              <td className="px-3 py-6 text-sm text-center">
-                                <div className="mt-2">
-                                  <input
-                                    type="radio"
-                                    name={`radio-${item.id_pemeriksaan}`}
-                                    checked={
-                                      radioState[item.id_pemeriksaan]?.memenuhi
-                                    }
-                                    value="memenuhi"
-                                    onChange={() =>
-                                      handleRadioChange(
-                                        item.id_pemeriksaan,
-                                        "memenuhi"
-                                      )
-                                    }
-                                  />
-                                </div>
-                              </td>
-                              <td className="px-3 py-6 text-sm text-center">
-                                <div className="mt-2">
-                                  <input
-                                    type="radio"
-                                    name={`radio-${item.id_pemeriksaan}`}
-                                    checked={
-                                      radioState[item.id_pemeriksaan]
-                                        ?.tidak_memenuhi
-                                    }
-                                    value="tidak_memenuhi"
-                                    onChange={() =>
-                                      handleRadioChange(
-                                        item.id_pemeriksaan,
-                                        "tidak_memenuhi"
-                                      )
-                                    }
-                                  />
-                                </div>
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -939,95 +926,33 @@ export default function EntriData() {
   return (
     <div className="p-8">
       <Navbar />
-      <div className="space-y-3 pt-8">
-        <h3 className="text-H3 text-emphasis-on_surface-high">
-          Entri Data Hasil Survei
-        </h3>
-        <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
-          Blok I: Keterangan Tempat
-        </h4>
-      </div>
-      <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-        <TextInput
-          label="Provinsi"
-          labelPosition="left"
-          placeholder="Masukkan Provinsi"
-          size="Medium"
-          labelWidth="100px"
-          disabledActive={true}
-          value={dataEntri?.provinsi || ""}
-        />
-        <TextInput
-          label="Kabupaten/Kota"
-          labelPosition="left"
-          placeholder="Masukkan Kabupaten/Kota"
-          size="Medium"
-          labelWidth="100px"
-          disabledActive={true}
-          value={dataEntri?.kota || ""}
-        />
-        <TextInput
-          label="Nama Responden/Vendor"
-          labelPosition="left"
-          placeholder="Masukkan Nama Responden/Vendor"
-          size="Medium"
-          labelWidth="100px"
-          disabledActive={true}
-          value={dataEntri?.nama_responden || ""}
-        />
-        <TextInput
-          label="Alamat Responden/Geo-tagging"
-          labelPosition="left"
-          placeholder="Masukkan Alamat"
-          size="Medium"
-          labelWidth="100px"
-          disabledActive={true}
-          value={dataEntri?.alamat || ""}
-          // labelMargin="150px"
-        />
-        <TextInput
-          label="Nomor Telepon/HP /E-mail"
-          labelPosition="left"
-          placeholder="Masukkan Nomor Kontak"
-          size="Medium"
-          labelWidth="100px"
-          disabledActive={true}
-          value={dataEntri?.no_telepon || ""}
-        />
-        <TextInput
-          label="Kategori Responden /Vendor"
-          labelPosition="left"
-          placeholder="Masukkan Kategori"
-          size="Medium"
-          labelWidth="100px"
-          disabledActive={true}
-          value={dataEntri?.kategori_responden || ""}
-        />
-      </div>
-
-      <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+      <h3 className="text-H3 text-emphasis-on_surface-high">Pengawasan</h3>
+      <Formik initialValues={{ catatan_blok_1: "" }} onSubmit={handleSubmit}>
         {({ values, setFieldValue }) => (
           <Form>
-            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
+            <h4 className="text-H4 text-emphasis-on_surface-high">
+              Blok I: Keterangan Tempat
+            </h4>
+            <KeteranganTempatForm
+              values={values}
+              setFieldValue={setFieldValue}
+            />
+            <h4 className="text-H4 text-emphasis-on_surface-high">
               Blok II: Keterangan Petugas Lapangan
             </h4>
-            {dataEntri && (
-              <PetugasLapanganForm
-                dataEntri={dataEntri}
-                setFieldValue={setFieldValue}
-              />
-            )}
-            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
+            <KeteranganPetugasLapanganForm
+              values={values}
+              setFieldValue={setFieldValue}
+            />
+            <h4 className="text-H4 text-emphasis-on_surface-high">
               Blok III: Keterangan Pemberi Informasi
             </h4>
-            {dataEntri && (
-              <PemberiInformasiForm
-                dataEntri={dataEntri}
-                setFieldValue={setFieldValue}
-              />
-            )}
-            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
-              Blok IV: Keterangan Pemberi Informasi
+            <KeteranganPemberiInformasiForm
+              values={values}
+              setFieldValue={setFieldValue}
+            />
+            <h4 className="text-H4 text-emphasis-on_surface-high">
+              Blok IV: Keterangan Material, Peralatan, Tenaga Kerja
             </h4>
             <MaterialForm
               values={values}
@@ -1046,30 +971,157 @@ export default function EntriData() {
               setFieldValue={setFieldValue}
               hide={selectedValue !== 2}
             />
-            <h4 className="text-H4 text-emphasis-on_surface-high mt-4">
-              Blok V: Verifikasi Dokumen
-            </h4>
-            <VerifikasiDokumenForm
+            <KeteranganMaterialPeralatanTenagaKerjaForm
               values={values}
               setFieldValue={setFieldValue}
             />
+            <h4 className="text-H4 text-emphasis-on_surface-high">
+              Blok V: Verifikasi Dokumen
+            </h4>
+            <div className="rounded-[16px] border border-gray-200 overflow-hidden mt-4">
+              <div className="overflow-x-auto">
+                <table className="table-fixed w-full">
+                  <thead>
+                    <tr className="bg-custom-blue-100 text-left text-emphasis-on_surface-high uppercase tracking-wider">
+                      <th className="px-3 py-6 text-sm text-center w-[40px]">
+                        No
+                      </th>
+                      <th className="px-3 py-6 text-sm w-[180px]">
+                        Kelengkapan Dokumen
+                      </th>
+                      <th className="px-3 py-6 text-sm text-center w-[150px] hidden">
+                        ID Pemeriksaan
+                      </th>
+                      <th className="px-3 py-6 text-sm text-center w-[200px] hidden">
+                        Status Pemeriksaan
+                      </th>
+                      <th className="px-3 py-6 text-sm text-center w-[200px] hidden">
+                        Verified By
+                      </th>
+                      <th className="px-3 py-6 text-sm text-center w-[140px]">
+                        Memenuhi
+                      </th>
+                      <th className="px-3 py-6 text-sm text-center w-[140px]">
+                        Tidak Memenuhi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((item, index) => (
+                      <tr
+                        key={item.id_pemeriksaan}
+                        className={`${
+                          index % 2 === 0
+                            ? "bg-custom-neutral-0"
+                            : "bg-custom-neutral-100"
+                        }`}
+                      >
+                        <td className="px-3 py-4 text-sm text-center">
+                          {item.nomor}
+                        </td>
+                        <td className="px-3 py-4 text-sm">
+                          {item.kelengkapan_dokumen}
+                        </td>
+                        <td className="px-3 py-4 text-sm text-center hidden">
+                          {item.id_pemeriksaan}
+                        </td>
+                        <td className="px-3 py-4 text-sm hidden">
+                          {item.status_pemeriksaan || "Belum Dipilih"}
+                        </td>
+                        <td className="px-3 py-4 text-sm hidden">
+                          {item.verified_by}
+                        </td>
+
+                        {/* Tombol radio hanya muncul jika item.verified_by tidak null */}
+                        {item.id_pemeriksaan && item.verified_by !== null && (
+                          <>
+                            <td className="px-3 py-4 text-sm text-center">
+                              <input
+                                type="radio"
+                                id={`status-${item.id_pemeriksaan}-memenuhi`}
+                                name={`status-${item.id_pemeriksaan}`}
+                                value="memenuhi"
+                                checked={item.status_pemeriksaan === "memenuhi"}
+                                onChange={() =>
+                                  handleChange(item.id_pemeriksaan, "memenuhi")
+                                }
+                                className="mr-2"
+                              />
+                            </td>
+                            <td className="px-3 py-4 text-sm text-center">
+                              <input
+                                type="radio"
+                                id={`status-${item.id_pemeriksaan}-tidak_memenuhi`}
+                                name={`status-${item.id_pemeriksaan}`}
+                                value="tidak_memenuhi"
+                                checked={
+                                  item.status_pemeriksaan === "tidak_memenuhi"
+                                }
+                                onChange={() =>
+                                  handleChange(
+                                    item.id_pemeriksaan,
+                                    "tidak_memenuhi"
+                                  )
+                                }
+                                className="mr-2"
+                              />
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <h4 className="text-H4 text-emphasis-on_surface-high mt-6 mb-3 ">
+              Blok VI: Unggah Berita Acara
+            </h4>
+            <FileInput
+              onFileSelect={(files) => {
+                handleBeritaAcara(files);
+                setFieldValue("beritaAcara", files[0]);
+              }}
+              setSelectedFile={setBerita_Acara}
+              buttonText="Pilih Berkas"
+              multiple={false}
+              accept=".pdf"
+              // Label="Unggah Berita Acara"
+              HelxperText="Format .PDF dan maksimal 2MB"
+              state={beritaacarastate}
+              onCancel={() => {
+                handleCancelBeritaAcara();
+                setFieldValue("beritaAcara", null);
+              }}
+              selectedFile={selectedberitaacara}
+              maxSizeMB={2}
+            />
             <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-              <Button variant="solid_blue" size="Medium" type="submit">
+              <Button
+                variant="solid_blue"
+                size="Medium"
+                type="submit"
+                disabled={isSubmitDisabled}
+              >
                 Simpan
               </Button>
             </div>
           </Form>
         )}
       </Formik>
-      <CustomAlert
-        message={alertInfo.message}
-        severity={alertInfo.severity}
-        openInitially={alertInfo.open}
-        onClose={handleAlertClose}
-      />
+      {alert.open && (
+        <CustomAlert
+          message={alert.message}
+          severity={alert.severity}
+          openInitially={alert.open}
+          onClose={() => setAlert({ ...alert, open: false })}
+        />
+      )}
     </div>
   );
 }
+
+export default App;
 
 const Tabs = ({ index, items, onChange, selectedValue, button }) => {
   const handleClick = (tabIndex) => {
@@ -1089,7 +1141,8 @@ const Tabs = ({ index, items, onChange, selectedValue, button }) => {
                 selectedValue === tabIndex
                   ? "bg-custom-blue-500 text-emphasis-on_color-high"
                   : "text-emphasis-on_surface-medium hover:bg-surface-light-overlay"
-              }`}>
+              }`}
+            >
               {item}
             </button>
           ))}
@@ -1104,9 +1157,8 @@ const Tabs = ({ index, items, onChange, selectedValue, button }) => {
                   ? "bg-custom-blue-500 text-white"
                   : "bg-gray-200 text-gray-800"
               } px-4 py-2 rounded-lg`}
-              onClick={
-                button.onClick || (() => console.log("Button clicked!"))
-              }>
+              onClick={button.onClick || (() => console.log("Button clicked!"))}
+            >
               {button.label || "Button"}
             </button>
           )}
