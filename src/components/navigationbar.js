@@ -50,6 +50,11 @@ const Navbar = () => {
       label: "Pengumpulan Data",
       activePath: "/pengumpulan_data",
     },
+    {
+      href: "/pemeriksaan_data/informasi_pemeriksaan_data",
+      label: "Pemeriksaan",
+      activePath: "/pemeriksaan_data",
+    },
     { href: "", label: "Responden/Vendor", activePath: "/vendor" },
     { href: "", label: "Monitoring", activePath: "/pj_balai" },
   ];

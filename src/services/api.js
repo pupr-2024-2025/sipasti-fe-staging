@@ -12,6 +12,16 @@
     }
     };
 
+    export const submitDataVerifikasiValidasi = async (data) => {
+        try {
+            const response = await axios.post(`${API_URL}/pemeriksaan-rekonsiliasi/store-verifikasi-validasi`, data);
+            return response.data;
+        } catch (error) {
+            console.error("Error submitting data", error);
+            throw error;
+        }
+        };
+
     export const fetchDataEntriData = async (id) => {
         try {
         const response = await axios.get(
