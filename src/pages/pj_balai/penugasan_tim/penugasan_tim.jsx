@@ -243,7 +243,8 @@ export default function PenugasanTim() {
                 values.anggota,
                 values.skPenugasanTimTeknisBalai
               );
-          }}>
+          }}
+        >
           {({ values, submitForm, setFieldValue }) => {
             console.log("checkedvalue", values);
             return (
@@ -305,7 +306,8 @@ export default function PenugasanTim() {
                           {values.anggota.map((_, index) => (
                             <div
                               key={index}
-                              className="flex items-center space-x-4">
+                              className="flex items-center space-x-4"
+                            >
                               <Field
                                 as={Dropdown}
                                 name={`anggota.${index}`}
@@ -338,7 +340,8 @@ export default function PenugasanTim() {
                                         arrayHelpers.remove(index);
                                       }
                                     }
-                                  }}>
+                                  }}
+                                >
                                   <Trash
                                     size="24"
                                     color={
@@ -353,7 +356,8 @@ export default function PenugasanTim() {
                                   onClick={() => {
                                     arrayHelpers.push("");
                                     arrayHelpers.push("");
-                                  }}>
+                                  }}
+                                >
                                   <Add
                                     size="24"
                                     color={colors.Solid.Basic.Blue[500]}
@@ -389,7 +393,8 @@ export default function PenugasanTim() {
                     <Button
                       variant="solid_blue"
                       size="Medium"
-                      onClick={submitForm}>
+                      onClick={submitForm}
+                    >
                       Simpan
                     </Button>
                   </div>
@@ -418,7 +423,8 @@ export default function PenugasanTim() {
             usePenugasanTimStore
               .getState()
               .savePengawasData(values.pengawas, values.skPenugasanPengawas);
-          }}>
+          }}
+        >
           {({ values, submitForm, setFieldValue }) => (
             <Form className="h-full flex flex-col">
               <div className="mt-3 bg-neutral-100 px-6 py-8 min-h-[596px] rounded-[16px] space-y-8">
@@ -429,7 +435,8 @@ export default function PenugasanTim() {
                       {values.pengawas.map((_, index) => (
                         <div
                           key={index}
-                          className="flex items-center space-x-4">
+                          className="flex items-center space-x-4"
+                        >
                           <Field
                             as={Dropdown}
                             name={`pengawas.${index}`}
@@ -458,7 +465,8 @@ export default function PenugasanTim() {
                                 if (values.pengawas.length > 1) {
                                   arrayHelpers.remove(index);
                                 }
-                              }}>
+                              }}
+                            >
                               <Trash
                                 size="24"
                                 color={
@@ -470,7 +478,8 @@ export default function PenugasanTim() {
                             </div>
                             <div
                               className="w-12 h-12 flex items-center justify-center rounded-full bg-custom-blue-100 hover:bg-custom-blue-200 cursor-pointer"
-                              onClick={() => arrayHelpers.push("")}>
+                              onClick={() => arrayHelpers.push("")}
+                            >
                               <Add
                                 size="24"
                                 color={colors.Solid.Basic.Blue[500]}
@@ -533,7 +542,8 @@ export default function PenugasanTim() {
                 values.petugasLapangan,
                 values.skPenugasanPetugasLapangan
               );
-          }}>
+          }}
+        >
           {({ values, submitForm, setFieldValue }) => (
             <Form className="h-full flex flex-col">
               <div className="mt-3 bg-neutral-100 px-6 py-8 min-h-[596px] rounded-[16px] space-y-8">
@@ -544,7 +554,8 @@ export default function PenugasanTim() {
                       {values.petugasLapangan.map((_, index) => (
                         <div
                           key={index}
-                          className="flex items-center space-x-4">
+                          className="flex items-center space-x-4"
+                        >
                           <Field
                             as={Dropdown}
                             name={`petugasLapangan.${index}`}
@@ -573,7 +584,8 @@ export default function PenugasanTim() {
                                 if (values.petugasLapangan.length > 1) {
                                   arrayHelpers.remove(index);
                                 }
-                              }}>
+                              }}
+                            >
                               <Trash
                                 size="24"
                                 color={
@@ -585,7 +597,8 @@ export default function PenugasanTim() {
                             </div>
                             <div
                               className="w-12 h-12 flex items-center justify-center rounded-full bg-custom-blue-100 hover:bg-custom-blue-200 cursor-pointer"
-                              onClick={() => arrayHelpers.push("")}>
+                              onClick={() => arrayHelpers.push("")}
+                            >
                               <Add
                                 size="24"
                                 color={colors.Solid.Basic.Blue[500]}
@@ -648,7 +661,8 @@ export default function PenugasanTim() {
                 values.pengolahData,
                 values.skPenugasanPengolahData
               );
-          }}>
+          }}
+        >
           {({ values, submitForm, setFieldValue }) => (
             <Form className="h-full flex flex-col">
               <div className="mt-3 bg-neutral-100 px-6 py-8 min-h-[596px] rounded-[16px] space-y-8">
@@ -659,7 +673,8 @@ export default function PenugasanTim() {
                       {values.pengolahData.map((_, index) => (
                         <div
                           key={index}
-                          className="flex items-center space-x-4">
+                          className="flex items-center space-x-4"
+                        >
                           <Field
                             as={Dropdown}
                             name={`pengolahData.${index}`}
@@ -688,7 +703,8 @@ export default function PenugasanTim() {
                                 if (values.pengolahData.length > 1) {
                                   arrayHelpers.remove(index);
                                 }
-                              }}>
+                              }}
+                            >
                               <Trash
                                 size="24"
                                 color={
@@ -700,7 +716,8 @@ export default function PenugasanTim() {
                             </div>
                             <div
                               className="w-12 h-12 flex items-center justify-center rounded-full bg-custom-blue-100 hover:bg-custom-blue-200 cursor-pointer"
-                              onClick={() => arrayHelpers.push("")}>
+                              onClick={() => arrayHelpers.push("")}
+                            >
                               <Add
                                 size="24"
                                 color={colors.Solid.Basic.Blue[500]}
