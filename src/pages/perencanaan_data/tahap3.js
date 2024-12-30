@@ -12,6 +12,7 @@ import PeralatanShortlist from "./tahap3/forms/PeralatanShortlist";
 import TenagaKerjaShortlist from "./tahap3/forms/TenagaKerjaShortlist";
 import { useRouter } from "next/router";
 import axios from "axios";
+import CustomAlert from "../../components/alert";
 
 export default function Tahap3() {
   const NUMBER_OF_STEPS = 4;
@@ -19,7 +20,7 @@ export default function Tahap3() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const navigateToTahap1 = () => {
-    window.location.href = "/perencanaan_data/tahap1?fromTahap2=true";
+    window.location.href = "/perencanaan_data/tahap2?fromTahap3=true";
   };
   const { initialValues, fetchStatusProgres } = useStore();
 
@@ -47,7 +48,15 @@ export default function Tahap3() {
 
   const router = useRouter();
 
-  const { currentTab } = useStore();
+  const {
+    currentTab,
+    alertMessage,
+    alertSeverity,
+    isAlertOpen,
+    setAlertMessage,
+    setAlertSeverity,
+    setIsAlertOpen,
+  } = useStore();
 
   console.log("currentTab", currentTab);
 
@@ -104,6 +113,8 @@ export default function Tahap3() {
 
   // Adjust totalData to reflect the data for the selected tab
   const totalData = dataByTab[currentTab]?.length || 0;
+
+  console.log('initialValue', initialValues)
 
   return (
     <div className="p-8">
@@ -196,7 +207,16 @@ export default function Tahap3() {
             }
           );
 
-          router.replace("/perencanaan_data/tahap4");
+          if (response.data.status === "success") {
+            setAlertMessage("Data berhasil disimpan.");
+            setAlertSeverity("success");
+            setIsAlertOpen(true);
+            router.replace("/perencanaan_data/tahap4");
+            return;
+          }
+          setAlertMessage("Gagal menyimpan data.");
+          setAlertSeverity("error");
+          setIsAlertOpen(true);
         }}
         enableReinitialize={true}>
         {({ values }) => (
@@ -237,6 +257,12 @@ export default function Tahap3() {
           </Form>
         )}
       </Formik>
+      <CustomAlert
+        message={alertMessage}
+        severity={alertSeverity}
+        openInitially={isAlertOpen}
+        onClose={() => setIsAlertOpen(true)}
+      />
     </div>
   );
 }

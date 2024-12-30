@@ -12,6 +12,12 @@ const useStore = create((set) => ({
   filteredDataMaterial: [],
   rowsToAdd: 0,
   isModalOpen: false,
+  alertMessage: "",
+  alertSeverity: "info",
+  isAlertOpen: false,
+  setAlertSeverity: (severity) => set({ alertSeverity: severity }),
+  setAlertMessage: (message) => set({ alertMessage: message }),
+  setIsAlertOpen: (value) => set({ isAlertOpen: value }),
   setSelectedValue: (value) => set({ selectedValue: value }),
   setProvincesOptions: (options) => set({ provincesOptions: options }),
   setInitialValues: (values) =>

@@ -41,8 +41,14 @@ export const pemeriksaan_dataStore = create((set) => ({
       const response = await axios.get(
         `https://api-ecatalogue-staging.online/api/pengumpulan-data/get-entri-data/${id}`
       );
-      const data = response.data.data;
-
+  
+      const data = response.data?.data; // Tambahkan optional chaining untuk keamanan
+  
+      if (!data) {
+        console.error("Data tidak ditemukan dalam respons API.");
+        return;
+      }
+  
       set((state) => ({
         dataEntri: data,
         material: data.material || [],
@@ -56,13 +62,13 @@ export const pemeriksaan_dataStore = create((set) => ({
         data_vendor_id: data.data_vendor_id || "",
         identifikasi_kebutuhan_id: data.identifikasi_kebutuhan_id || "",
       }));
-
+  
       console.log("identifikasi_kebutuhan_id:", data.identifikasi_kebutuhan_id);
       console.log("data_vendor_id:", data.data_vendor_id);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching data:", error.message || error);
     }
-  },
+  },  
 
   userRole: "tim teknis",
   data: [

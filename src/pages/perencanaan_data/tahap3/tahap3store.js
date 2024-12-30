@@ -7,6 +7,14 @@ const useStore = create((set) => ({
     peralatan: [],
     tenaga_kerja: [],
   },
+  currentTab: 0,
+  alertMessage: "",
+  alertSeverity: "info",
+  isAlertOpen: false,
+  setAlertSeverity: (severity) => set({ alertSeverity: severity }),
+  setAlertMessage: (message) => set({ alertMessage: message }),
+  setIsAlertOpen: (value) => set({ isAlertOpen: value }),
+  setCurrentTab: (tab) => set({ currentTab: tab }),
   fetchStatusProgres: async () => {
     try {
       const identifikasiKebutuhanId = localStorage.getItem(

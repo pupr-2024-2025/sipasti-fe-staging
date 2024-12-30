@@ -12,15 +12,19 @@ import CustomAlert from "../../components/alert";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { data } from "autoprefixer";
+import { Formik } from "formik";
+import SipastiForm from "./tahap1/forms/SipastiForm";
+import ManualForm from "./tahap1/forms/ManualForm";
+import tahap1Store from "./tahap1/forms/store/tahap1store";
 
-const Tahap1 = () => {
+const Tahap1V2 = () => {
   const [koderupSipasti, setKodeRUPSipasti] = useState("");
   const [namaPaketSipasti, setNamaPaketSipasti] = useState("");
   const [namaPPKSipasti, setNamaPPKSipasti] = useState("");
   const [jabatanPPKSipasti, setJabatanPPKSipasti] = useState("");
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertSeverity, setAlertSeverity] = useState("info");
+  // const [alertOpen, setAlertOpen] = useState(false);
+  // const [alertMessage, setAlertMessage] = useState("");
+  // const [alertSeverity, setAlertSeverity] = useState("info");
   const [balai_kerja_id, setBalai] = useState("");
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,6 +43,16 @@ const Tahap1 = () => {
     console.log("Mencari data di SIPASTI dengan Kode RUP:", koderupSipasti);
   };
 
+  const {
+    selectedTab,
+    setInitialValueManual,
+    initialValueManual,
+    alertMessage,
+    alertSeverity,
+    isAlertOpen,
+    setIsAlertOpen,
+  } = tahap1Store();
+
   const NUMBER_OF_STEPS = 4;
   const stepLabels = [
     "Informasi Umum",
@@ -52,21 +66,21 @@ const Tahap1 = () => {
     const data =
       type === "sipasti"
         ? {
-            tipe_informasi_umum: "sipasti",
-            kode_rup: koderupSipasti,
-            nama_paket: namaPaketSipasti,
-            nama_ppk: namaPPKSipasti,
-            jabatan_ppk: jabatanPPKSipasti,
-            nama_balai: "",
-          }
+          tipe_informasi_umum: "sipasti",
+          kode_rup: koderupSipasti,
+          nama_paket: namaPaketSipasti,
+          nama_ppk: namaPPKSipasti,
+          jabatan_ppk: jabatanPPKSipasti,
+          nama_balai: "",
+        }
         : {
-            tipe_informasi_umum: "manual",
-            kode_rup: koderupManual,
-            nama_paket: namaPaketManual,
-            nama_ppk: namaPPKManual,
-            jabatan_ppk: jabatanPPKManual,
-            nama_balai: namaBalaiManual,
-          };
+          tipe_informasi_umum: "manual",
+          kode_rup: koderupManual,
+          nama_paket: namaPaketManual,
+          nama_ppk: namaPPKManual,
+          jabatan_ppk: jabatanPPKManual,
+          nama_balai: namaBalaiManual,
+        };
 
     try {
       const response = await fetch(url, {
@@ -148,10 +162,10 @@ const Tahap1 = () => {
       console.log("Get data informasi umum", result.data.nama_balai);
 
       if (result?.data) {
-        setKodeRUPManual(result.data.kode_rup || "");
-        setNamaPaketManual(result.data.nama_paket || "");
-        setNamaPPKManual(result.data.nama_ppk || "");
-        setJabatanPPKManual(result.data.jabatan_ppk || "");
+        // setKodeRUPManual(result.data.kode_rup || "");
+        // setNamaPaketManual(result.data.nama_paket || "");
+        // setNamaPPKManual(result.data.nama_ppk || "");
+        // setJabatanPPKManual(result.data.jabatan_ppk || "");
         console.log("nama balai yang terisi", result.data.nama_balai);
         console.log("Isi formatted options : " + balaiOptions);
         const selectedBalai = balaiOptions.find((option) => {
@@ -162,6 +176,14 @@ const Tahap1 = () => {
           console.log("error undefined data");
         }
         console.log("isi selected balai : " + selectedBalai?.label ?? "");
+        const dataSaved = {
+          kodeRup: result.data.kode_rup,
+          namaPaket: result.data.nama_paket,
+          namaPpk: result.data.nama_ppk,
+          jabatanPpk: result.data.jabatan_ppk,
+          namaBalai: selectedBalai,
+        }
+        setInitialValueManual(dataSaved);
         setNamaBalaiManual(selectedBalai?.value ?? 0);
       }
     } catch (error) {
@@ -170,133 +192,7 @@ const Tahap1 = () => {
     console.log("oh my wow", namaBalaiManual);
   };
   console.log("ayam bakar ash shiddiq", namaBalaiManual);
-  const tabs = [
-    {
-      label: "Sinkron data dari SIPASTI",
-      content: (
-        <div className="">
-          <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-            <TextInput
-              label="Kode RUP"
-              labelPosition="left"
-              placeholder="Masukkan Kode RUP"
-              size="Medium"
-              value={koderupSipasti}
-              errorMessage="Kode RUP tidak boleh kosong"
-              onChange={(e) => setKodeRUPSipasti(e.target.value)}
-            />
-            <TextInput
-              label="Nama Paket"
-              labelPosition="left"
-              placeholder="Masukkan Nama Paket"
-              size="Medium"
-              isRequired="true"
-              value={namaPaketSipasti}
-              errorMessage="Nama paket tidak boleh kosong"
-              onChange={(e) => setNamaPaketSipasti(e.target.value)}
-            />
-            <div className="px-[236px]">
-              <Button variant="disabled" size="Medium" onClick={handleCariData}>
-                Cari Data di SIPASTI
-              </Button>
-            </div>
-            <TextInput
-              label="Nama PPK"
-              labelPosition="left"
-              placeholder="Masukkan Nama PPK"
-              size="Medium"
-              isRequired="true"
-              value={namaPPKSipasti}
-              errorMessage="Nama PPK tidak boleh kosong"
-              onChange={(e) => setNamaPPKSipasti(e.target.value)}
-            />
-            <TextInput
-              label="Jabatan PPK"
-              labelPosition="left"
-              placeholder="Masukkan Jabatan PPK"
-              size="Medium"
-              isRequired="true"
-              value={jabatanPPKSipasti}
-              errorMessage="Jabatan PPK tidak boleh kosong"
-              onChange={(e) => setJabatanPPKSipasti(e.target.value)}
-            />
-          </div>
-        </div>
-      ),
-    },
-    {
-      label: "Input Manual",
-      content: (
-        <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-          <TextInput
-            label="Kode RUP"
-            labelPosition="left"
-            placeholder="Masukkan Kode RUP"
-            size="Medium"
-            value={koderupManual}
-            errorMessage="Kode RUP tidak boleh kosong"
-            onChange={(e) => setKodeRUPManual(e.target.value)}
-          />
-          <Dropdown
-            options={balaiOptions}
-            label="Nama Balai"
-            placeholder="Pilih Balai"
-            onSelect={(selectedOption) => {
-              console.log("Irvan kotak", balaiOptions);
-              setNamaBalaiManual(balaiOptions[selectedOption]?.value || "");
-            }}
-            isRequired={true}
-            value={namaBalaiManual}
-            labelWidth="220px"
-            labelPosition="left"
-            errorMessage="Balai tidak boleh kosong"
-          />
-
-          {/* <TextInput
-            label="Nama Balai"
-            labelPosition="left"
-            placeholder="Masukkan Nama Balai"
-            size="Medium"
-            isRequired="true"
-            value={namaBalaiManual}
-            errorMessage="Nama balai tidak boleh kosong"
-            onChange={(e) => setNamaBalaiManual(e.target.value)}
-          /> */}
-
-          <TextInput
-            label="Nama Paket"
-            labelPosition="left"
-            placeholder="Masukkan Nama Paket"
-            size="Medium"
-            isRequired="true"
-            value={namaPaketManual}
-            errorMessage="1Nama paket tidak boleh kosong"
-            onChange={(e) => setNamaPaketManual(e.target.value)}
-          />
-          <TextInput
-            label="Nama PPK"
-            labelPosition="left"
-            placeholder="Masukkan Nama PPK"
-            size="Medium"
-            isRequired="true"
-            value={namaPPKManual}
-            errorMessage="Nama PPK tidak boleh kosong"
-            onChange={(e) => setNamaPPKManual(e.target.value)}
-          />
-          <TextInput
-            label="Jabatan PPK"
-            labelPosition="left"
-            placeholder="Masukkan Jabatan PPK"
-            size="Medium"
-            isRequired="true"
-            value={jabatanPPKManual}
-            errorMessage="Jabatan PPK tidak boleh kosong"
-            onChange={(e) => setJabatanPPKManual(e.target.value)}
-          />
-        </div>
-      ),
-    },
-  ];
+  
   console.log("type of nama balai", typeof namaBalaiManual);
   const areFieldsFilled = () => {
     console.log("=== Type Nama Balai", typeof namaBalaiManual);
@@ -318,6 +214,8 @@ const Tahap1 = () => {
       jabatanPPKManual.trim() !== ""
     );
   };
+
+  console.log('balaiOptions', balaiOptions)
 
   const handleNextStep = async (type) => {
     if (isSubmitting) return;
@@ -347,6 +245,8 @@ const Tahap1 = () => {
     setAlertOpen(true);
   };
 
+  console.log(selectedTab);
+
   return (
     <div className="p-8">
       <Navbar />
@@ -363,44 +263,27 @@ const Tahap1 = () => {
             />
             <br />
           </div>
-          {currentStep === 0 && (
-            <>
-              <h4 className="text-H4 text-emphasis-on_surface-high">
-                Informasi Umum
-              </h4>
-              <div className="mt-6">
-                <Tabs tabs={tabs} />
-              </div>
-            </>
-          )}
+          <h4 className="text-H4 text-emphasis-on_surface-high">
+            Informasi Umum
+          </h4>
+          <SipastiForm
+            hide={selectedTab !== 0}
+          />
+          <ManualForm
+            hide={selectedTab !== 1}
+            balaiOptions={balaiOptions}
+            initialValues={initialValueManual}
+          />
         </div>
-        {currentStep === 0 && (
-          <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-            <Button
-              variant="outlined_yellow"
-              size="Medium"
-              disabled={currentStep === 0}
-              onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}>
-              Kembali
-            </Button>
-            <Button
-              variant="solid_blue"
-              size="Medium"
-              disabled={!areFieldsFilled()}
-              onClick={() => handleNextStep(("manual", 1))}>
-              Lanjut
-            </Button>
-          </div>
-        )}
       </div>
       <CustomAlert
         message={alertMessage}
         severity={alertSeverity}
-        openInitially={alertOpen}
-        onClose={() => setAlertOpen(false)}
+        openInitially={isAlertOpen}
+        onClose={() => setIsAlertOpen(true)}
       />
     </div>
   );
 };
 
-export default Tahap1;
+export default Tahap1V2;

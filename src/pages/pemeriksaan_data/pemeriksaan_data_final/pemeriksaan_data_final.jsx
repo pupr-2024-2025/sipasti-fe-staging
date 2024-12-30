@@ -37,19 +37,18 @@ function App() {
     open: false,
   });
 
-  // useEffect(() => {
-  //   fetchDataEntriData(136);
-  // }, [fetchDataEntriData]);
-
   useEffect(() => {
-    if (id) {
-      console.log("shortlist_id yang dikirim:", id);
-      fetchDataEntriData(id);
-    }
-  }, [id, fetchDataEntriData]);
+    const storedId = localStorage.getItem("shortlist_id");
 
-  //   fetchData();
-  // }, [setData]);
+    console.log("Nilai shortlist_id dari localStorage:", storedId);
+
+    if (storedId) {
+      console.log("shortlist_id yang dikirim:", storedId);
+      fetchDataEntriData(storedId);
+    } else {
+      console.log("shortlist_id belum tersedia di localStorage.");
+    }
+  }, [fetchDataEntriData]);
 
   const handleCancelBeritaAcara = () => {
     console.log("Cancelling file upload...");
@@ -74,6 +73,8 @@ function App() {
   );
 
   const handleSubmit = async (values) => {
+    console.log("localStorage sebelum submit:", { ...localStorage });
+
     try {
       const verifikasiValidasi = data
         .filter((item) => item.verified_by !== null)
@@ -83,7 +84,6 @@ function App() {
           verified_by: item.verified_by || "tim teknis",
         }));
 
-      // Membuat objek FormData
       const payload = new FormData();
       payload.append("identifikasi_kebutuhan_id", identifikasi_kebutuhan_id);
       payload.append("data_vendor_id", data_vendor_id);
@@ -135,6 +135,9 @@ function App() {
         severity: "error",
         open: true,
       });
+    } finally {
+      localStorage.removeItem("shortlist_id");
+      console.log("localStorage setelah submit:", { ...localStorage });
     }
   };
 

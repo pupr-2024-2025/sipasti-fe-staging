@@ -9,10 +9,15 @@ import Button from "../../components/button";
 import Pagination from "../../components/pagination";
 import TextInput from "../../components/input";
 import Dropdown from "../../components/dropdown";
-import DropdownAPI from "../../components/DropdownAPI";
+// import DropdownAPI from "../../components/DropdownAPI";
 import SearchBox from "../../components/searchbox";
 import AddRowModal from "../../components/addrowmodal";
 import { useRouter } from "next/router";
+import CustomAlert from "../../components/alert";
+
+const ApiUrls = {
+  tahap2PostApi: "https://api-ecatalogue-staging.online/api/perencanaan-data/store-identifikasi-kebutuhan"
+}
 
 export default function Tahap2() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -97,7 +102,7 @@ export default function Tahap2() {
   };
 
   const navigateToTahap1 = () => {
-    window.location.href = "/perencanaan_data/tahap1?fromTahap2=true";
+    window.location.href = "/perencanaan_data/tahap1v2?fromTahap2=true";
   };
   const {
     selectedValue,
@@ -108,6 +113,12 @@ export default function Tahap2() {
     setProvincesOptions,
     setCitiesOptions,
     setInitialValues,
+    alertMessage,
+    alertSeverity,
+    isAlertOpen,
+    setIsAlertOpen,
+    setAlertMessage,
+    setAlertSeverity,
   } = useStore();
 
   console.log("selectedValue", selectedValue);
@@ -195,10 +206,40 @@ export default function Tahap2() {
 
   const items = ["Material", "Peralatan", "Tenaga Kerja"];
 
-  const handleSubmit = (values) => {
-    console.log(values);
+  const handleSubmit = async (values) => {
+    const informasiUmumId = localStorage.getItem("informasi_umum_id");
+    const { materials, peralatans, tenagaKerjas } = values;
 
-    router.replace("/perencanaan_data/tahap3");
+    if (materials.length === 0 && peralatans.length === 0 && tenagaKerjas.length === 0) {
+      setAlertMessage("Minimal harus ada satu data yang diisi.");
+      setAlertSeverity("error");
+      setIsAlertOpen(true);
+      return;
+    }
+
+    const data = {
+      material: materials,
+      peralatan: peralatans,
+      tenaga_kerja: tenagaKerjas,
+      informasi_umum_id: informasiUmumId,
+    }
+
+    const response = await axios.post(ApiUrls.tahap2PostApi, data);
+
+    if (response.data.status == 'success') {
+      router.replace("/perencanaan_data/tahap3");
+      const identifikasi_kebutuhan_id = response?.data?.data?.material[0]?.identifikasi_kebutuhan_id ?? 0;
+      if (identifikasi_kebutuhan_id != 0) {
+        localStorage.setItem("identifikasi_kebutuhan_id", identifikasi_kebutuhan_id)
+      }
+      setAlertMessage("Data berhasil disimpan.");
+      setAlertSeverity("success");
+      setIsAlertOpen(true);
+      return;
+    }
+    setAlertMessage("Gagal menyimpan data.");
+    setAlertSeverity("error");
+    setIsAlertOpen(true);
   };
 
   console.log("isModalOpen", isModalOpen);
@@ -267,6 +308,12 @@ export default function Tahap2() {
           )}
         </Formik>
       </div>
+      <CustomAlert
+        message={alertMessage}
+        severity={alertSeverity}
+        openInitially={isAlertOpen}
+        onClose={() => setIsAlertOpen(true)}
+      />
     </div>
   );
 }
@@ -1351,6 +1398,7 @@ const Tabs = ({ index, items, onChange, selectedValue, button }) => {
         <div className="inline-flex space-x-2 bg-custom-neutral-100 rounded-[16px] p-2 h-[60px]">
           {items.map((item, tabIndex) => (
             <button
+              type="button"
               key={tabIndex}
               onClick={() => handleClick(tabIndex)}
               className={`px-4 py-3 text-Small rounded-[12px] transition-all duration-300 cursor-pointer whitespace-nowrap ${
@@ -1366,6 +1414,7 @@ const Tabs = ({ index, items, onChange, selectedValue, button }) => {
         <div className="flex items-center space-x-3">
           {button && (
             <button
+              type="button"
               className={`${
                 button.variant === "solid_blue"
                   ? "bg-custom-blue-500 text-white"

@@ -12,6 +12,7 @@ export default function PenugasanTim() {
   const { initialValues, fetchStatusProgres } = useStore();
   const { status_progres } = initialValues;
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [activeSubMenu, setActiveSubMenu] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({
     top: 0,
     left: 0,
@@ -143,7 +144,7 @@ export default function PenugasanTim() {
             left: dropdownPosition.alignRight
               ? undefined
               : dropdownPosition.left,
-            right: dropdownPosition.alignRight ? 0 : undefined, // Jika alignRight true, gunakan right
+            right: dropdownPosition.alignRight ? 0 : undefined,
             zIndex: 10000,
             boxShadow: "0px 4px 16px 0px rgba(165, 163, 174, 0.45)",
           }}>
@@ -157,6 +158,45 @@ export default function PenugasanTim() {
             className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200">
             Lihat Detail Kuesioner
           </Link>
+          <div className="relative">
+            <button
+              className="block w-full px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200 text-left"
+              onMouseEnter={() => setActiveSubMenu(true)}
+              onMouseLeave={() => setActiveSubMenu(false)}
+            >
+              Penugasan Tim
+              {activeSubMenu && (
+                <div 
+                  className="absolute right-full top-0 bg-white rounded-[12px] shadow-lg p-2 w-56 ml-1 text-left"
+                  style={{
+                    boxShadow: "0px 4px 16px 0px rgba(165, 163, 174, 0.45)",
+                  }}
+                >
+                  <Link
+                    href={`/pj_balai/penugasan_tim/pengawas`}
+                    key="submenu_pengawas"
+                    className="block w-full px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200 text-left"
+                  >
+                    Pengawas
+                  </Link>
+                  <Link
+                    href={`/pj_balai/penugasan_tim/petugas_lapangan`}
+                    key="submenu_pengawas"
+                    className="block w-full px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200 text-left"
+                  >
+                    Petugas Lapangan
+                  </Link>
+                  <Link
+                    href={`/pj_balai/penugasan_tim/pengolah_data`}
+                    key="submenu_pengawas"
+                    className="block w-full px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] transition-all duration-200 text-left"
+                  >
+                    Pengolah Data
+                  </Link>
+                </div>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </div>

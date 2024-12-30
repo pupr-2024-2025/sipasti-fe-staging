@@ -57,6 +57,11 @@ const Navbar = () => {
     },
     { href: "", label: "Responden/Vendor", activePath: "/vendor" },
     { href: "", label: "Monitoring", activePath: "/pj_balai" },
+    {
+      href: "/user_role/user_role",
+      label: "Assign User",
+      activePath: "/user_role",
+    },
   ];
 
   useEffect(() => {
