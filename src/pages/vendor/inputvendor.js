@@ -7,9 +7,24 @@ import Button from "../../components/button";
 import Dropdown from "../../components/dropdown";
 import axios from "axios";
 import CustomAlert from "../../components/alert";
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api'
 // import { Console } from "console";
 
+const containerStyle = {
+  width: '600px',
+  height: '400px',
+}
+
+const center = {
+  lat: -3.745,
+  lng: -38.523,
+}  
 const InputVendor = ({ onNext, onBack, onClose }) => {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: 'AIzaSyB8rzsPylVTp7WFWmXxXvWOpVCIhVdySCo',
+  })
+  const [map, setMap] = React.useState(null)
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [nama_vendor, setnama_vendor] = useState("");
   const [jenis_vendor_id, setjenis_vendor_id] = useState("");
@@ -37,6 +52,16 @@ const InputVendor = ({ onNext, onBack, onClose }) => {
   const [alertMessage, setAlertMessage] = useState(null);
   const [alertSeverity, setAlertSeverity] = useState("info");
   const [alertOpen, setAlertOpen] = useState(false);
+
+  const onLoad = React.useCallback(function callback(map) {
+    const bounds = new window.google.maps.LatLngBounds(center);
+    map.fitBounds(bounds);
+    setMap(map);
+  }, []);
+
+  const onUnmount = React.useCallback(function callback(map) {
+    setMap(null);
+  }, []);
 
   const handleInputChange = (newValues) => {
     setInputValues(newValues);
@@ -270,6 +295,9 @@ const InputVendor = ({ onNext, onBack, onClose }) => {
       setAlertOpen(true);
     }
   };
+
+
+  
   // .then((response) => {
   //   if (!response.ok) {
   //     throw new Error("Gagal menyimpan data. Silakan coba lagi.");
@@ -316,6 +344,12 @@ const InputVendor = ({ onNext, onBack, onClose }) => {
   //   console.error("Fetch error:", error);
   // });
   // };
+
+  const handleMapClick = (event) => {
+    const lat = event.latLng.lat(); // Get latitude
+    const lng = event.latLng.lng(); // Get longitude
+    setkoordinat(`Lat: ${lat}, Lng: ${lng}`); // Update the koordinat state with the clicked coordinates
+  };
 
   const getOptions = () => {
     if (selectedTypes.length === 0) return [];
@@ -367,210 +401,212 @@ const InputVendor = ({ onNext, onBack, onClose }) => {
     setkota_id(selectedOption ? selectedOption.value : "");
   };
 
-  return (
-    <div className="p-8">
-      <Navbar />
-      <div className="p-6">
-        <h3 className="text-H3 text-emphasis-on_surface-high">
-          Input Data Vendor
-        </h3>
-
-        <div className="flex flex-wrap gap-4 mt-3">
-          <div className="flex-grow grid grid-cols-1 gap-4 py-8 px-6 rounded-[16px] bg-custom-neutral-100">
-            <TextInput
-              label="Nama Vendor/Perusahaan"
-              placeholder="Masukkan nama vendor/perusahaan"
-              state="border"
-              isRequired={true}
-              errorMessage="Vendor/Perusahaan tidak boleh kosong."
-              value={nama_vendor}
-              onChange={(e) => setnama_vendor(e.target.value)}
-            />
-            <div className="space-b-1">
-              <p className="text-B2">Jenis Responden/ Vendor</p>
-              <div className="flex space-x-8">
-                <Checkbox
-                  label="Material"
-                  checked={selectedTypes.includes("1")}
-                  onChange={() => handleCheckboxChange("1")}
+  return isLoaded ? (
+    <>
+      <div className="p-8">
+        <Navbar />
+        <div className="p-6">
+          <h3 className="text-H3 text-emphasis-on_surface-high">Input Data Vendor</h3>
+  
+          <div className="flex flex-wrap gap-4 mt-3">
+            <div className="flex-grow grid grid-cols-1 gap-4 py-8 px-6 rounded-[16px] bg-custom-neutral-100">
+              <TextInput
+                label="Nama Vendor/Perusahaan"
+                placeholder="Masukkan nama vendor/perusahaan"
+                state="border"
+                isRequired={true}
+                errorMessage="Vendor/Perusahaan tidak boleh kosong."
+                value={nama_vendor}
+                onChange={(e) => setnama_vendor(e.target.value)}
+              />
+  
+              <div className="space-b-1">
+                <p className="text-B2">Jenis Responden/ Vendor</p>
+                <div className="flex space-x-8">
+                  <Checkbox
+                    label="Material"
+                    checked={selectedTypes.includes("1")}
+                    onChange={() => handleCheckboxChange("1")}
+                  />
+                  <Checkbox
+                    label="Peralatan"
+                    checked={selectedTypes.includes("2")}
+                    onChange={() => handleCheckboxChange("2")}
+                  />
+                  <Checkbox
+                    label="Tenaga Kerja"
+                    checked={selectedTypes.includes("3")}
+                    onChange={() => handleCheckboxChange("3")}
+                  />
+                </div>
+              </div>
+  
+              <Dropdown
+                options={getOptions()}
+                label="Kategori Vendor/Perusahaan"
+                placeholder="Pilih kategori vendor/perusahaan"
+                errorMessage="Kategori tidak boleh kosong."
+                value={kategori_vendor_id}
+                onSelect={(selectedOption) => setkategori_vendor_id(selectedOption.value)}
+                isRequired={true}
+              />
+  
+              <TextInput
+                label="Sumber daya yang dimiliki"
+                placeholder="Masukkan sumber daya"
+                type="text"
+                state="border"
+                isRequired={true}
+                errorMessage="Sumber daya tidak boleh kosong."
+                value={sumber_daya}
+                onChange={(e) => setsumber_daya(e.target.value)}
+              />
+  
+              <TextInput
+                label="Alamat vendor atau perusahaan"
+                placeholder="Masukkan alamat"
+                type="text"
+                state="border"
+                isRequired={true}
+                errorMessage="Alamat tidak boleh kosong."
+                value={alamat}
+                onChange={(e) => setalamat(e.target.value)}
+              />
+  
+              <div className="flex gap-8">
+                <TextInput
+                  label="Nomor Telepon"
+                  placeholder="Masukkan nomor telepon"
+                  type="text"
+                  state="border"
+                  isRequired={true}
+                  errorMessage="Nomor telepon tidak boleh kosong."
+                  name="phone"
+                  value={no_telepon}
+                  onChange={(e) => setno_telepon(e.target.value)}
+                  className="flex-1"
                 />
-                <Checkbox
-                  label="Peralatan"
-                  checked={selectedTypes.includes("2")}
-                  onChange={() => handleCheckboxChange("2")}
+                <TextInput
+                  label="Nomor HP"
+                  placeholder="Masukkan nomor HP"
+                  type="text"
+                  state="border"
+                  isRequired={true}
+                  errorMessage="Nomor HP tidak boleh kosong."
+                  value={no_hp}
+                  onChange={(e) => setno_hp(e.target.value)}
+                  className="flex-1"
                 />
-                <Checkbox
-                  label="Tenaga Kerja"
-                  checked={selectedTypes.includes("3")}
-                  onChange={() => handleCheckboxChange("3")}
+              </div>
+  
+              <TextInput
+                label="Nama PIC"
+                placeholder="Masukkan nama PIC"
+                type="text"
+                state="border"
+                isRequired={true}
+                errorMessage="Nama PIC tidak boleh kosong."
+                value={nama_pic}
+                onChange={(e) => setnama_pic(e.target.value)}
+              />
+  
+              <div className="flex gap-8">
+                <Dropdown
+                  options={provinsiOptions}
+                  label="Pilih Provinsi"
+                  placeholder="Pilih Provinsi"
+                  onSelect={handleProvinsiChange}
+                  value={provinsiOptions.find((option) => option.value === provinsi_id)}
+                  isRequired
+                  errorMessage="Provinsi harus dipilih"
+                />
+                <Dropdown
+                  options={kotaOptions}
+                  label="Pilih Kota"
+                  placeholder="Pilih Kota"
+                  onSelect={handleKotaChange}
+                  value={kotaOptions.find((option) => option.value === kota_id)}
+                  isRequired
+                  errorMessage="Kota harus dipilih"
                 />
               </div>
             </div>
-            <Dropdown
-              options={getOptions()}
-              label="Kategori Vendor/Perusahaan"
-              placeholder="Pilih kategori vendor/perusahaan"
-              errorMessage="Kategori tidak boleh kosong."
-              value={kategori_vendor_id}
-              onSelect={(selectedOption) => {
-                // const associatedValues = labelToCategoriesMap[
-                //   selectedOption.label
-                // ] || [selectedOption.value];
-                setkategori_vendor_id(selectedOption.value);
-                // setkategori_vendor_id(associatedValues.join(","));
-              }}
-              isRequired={true}
-            />{" "}
-            <TextInput
-              label="Sumber daya yang dimiliki"
-              placeholder="Masukkan sumber daya"
-              type="text"
-              state="border"
-              isRequired={true}
-              errorMessage="Sumber daya tidak boleh kosong."
-              value={sumber_daya}
-              onChange={(e) => setsumber_daya(e.target.value)}
-            />
-            <TextInput
-              label="Alamat vendor atau perusahaan"
-              placeholder="Masukkan alamat"
-              type="text"
-              state="border"
-              isRequired={true}
-              errorMessage="Alamat tidak boleh kosong."
-              value={alamat}
-              onChange={(e) => setalamat(e.target.value)}
-            />
-            <div className="flex gap-8">
-              <TextInput
-                label="Nomor Telepon"
-                placeholder="Masukkan nomor telepon"
-                type="text"
-                state="border"
-                isRequired={true}
-                errorMessage="Nomor telepon tidak boleh kosong."
-                name="phone"
-                value={no_telepon}
-                onChange={(e) => setno_telepon(e.target.value)}
-                className="flex-1"
-              />
-              <TextInput
-                label="Nomor HP"
-                placeholder="Masukkan nomor HP"
-                type="text"
-                state="border"
-                isRequired={true}
-                errorMessage="Nomor HP tidak boleh kosong."
-                value={no_hp}
-                onChange={(e) => setno_hp(e.target.value)}
-                className="flex-1"
-              />
-            </div>
-            <TextInput
-              label="Nama PIC"
-              placeholder="Masukkan nama PIC"
-              type="text"
-              state="border"
-              isRequired={true}
-              errorMessage="Nama PIC tidak boleh kosong."
-              value={nama_pic}
-              onChange={(e) => setnama_pic(e.target.value)}
-            />
-            <div className="flex gap-8">
-              <Dropdown
-                options={provinsiOptions}
-                label="Pilih Provinsi"
-                placeholder="Pilih Provinsi"
-                onSelect={handleProvinsiChange}
-                value={provinsiOptions.find(
-                  (option) => option.value === provinsi_id
-                )}
-                isRequired
-                errorMessage="Provinsi harus dipilih"
-              />
-              <Dropdown
-                options={kotaOptions}
-                label="Pilih Kota"
-                placeholder="Pilih Kota"
-                onSelect={handleKotaChange}
-                value={kotaOptions.find((option) => option.value === kota_id)}
-                isRequired
-                errorMessage="Kota harus dipilih"
-              />
+  
+  
+            <div className="flex-grow grid grid-cols-1 gap-4 py-8 px-6 rounded-[16px] bg-custom-neutral-100">
+              <div className="space-y-6">
+            <GoogleMap
+              mapContainerStyle={containerStyle}
+              center={center}
+              zoom={10}
+              onLoad={onLoad}
+              onUnmount={onUnmount}
+              onClick={handleMapClick} // Map click handler to set coordinates
+            >
+              {/* Add your markers or other components */}
+            </GoogleMap>
+                <TextInput
+                  label="Koordinat"
+                  placeholder="Masukkan Koordinat"
+                  type="text"
+                  value={koordinat}
+                  onChange={(e) => setkoordinat(e.target.value)}
+                  state="border"
+                />
+                <FileInput
+                  onFileSelect={handleLogoFileSelect}
+                  setSelectedFile={setLogoUrl}
+                  buttonText="Pilih Berkas"
+                  multiple={false}
+                  accept=".jpg, .jpeg"
+                  Label="Unggah Logo"
+                  HelperText="Format .JPG, .JPEG dan maksimal 2MB"
+                  state={logoUploadState}
+                  onCancel={handleLogoCancel}
+                  selectedFile={logo_url}
+                  maxSizeMB={2}
+                />
+                <FileInput
+                  onFileSelect={handleDokPendukungFileSelect}
+                  setSelectedFile={setDokPendukungUrl}
+                  buttonText="Pilih Berkas"
+                  multiple={false}
+                  accept=".pdf"
+                  Label="Unggah Dokumen Pendukung"
+                  HelperText="Format .PDF dan maksimal 2MB"
+                  state={dokPendukungUploadState}
+                  onCancel={handleDokPendukungCancel}
+                  selectedFile={dok_pendukung_url}
+                  maxSizeMB={2}
+                />
+              </div>
+  
+              <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
+                <Button label="Kembali" variant="secondary" size="md" onClick={onBack} />
+                <Button label="Simpan & Lanjut" variant="primary" size="md" onClick={onNext} />
+              </div>
             </div>
           </div>
-
-          <div className="flex-grow grid grid-cols-1 gap-4 py-8 px-6 rounded-[16px] bg-custom-neutral-100">
-            <div className="space-y-6">
-              <TextInput
-                label="Koordinat"
-                placeholder="Masukkan Koordinat"
-                type="text"
-                value={koordinat}
-                onChange={(e) => setkoordinat(e.target.value)}
-                state="border"
-              />
-              <FileInput
-                onFileSelect={handleLogoFileSelect}
-                setSelectedFile={setLogoUrl}
-                buttonText="Pilih Berkas"
-                multiple={false}
-                accept=".jpg, .jpeg"
-                Label="Unggah Logo"
-                HelperText="Format .JPG, .JPEG dan maksimal 2MB"
-                state={logoUploadState}
-                onCancel={handleLogoCancel}
-                selectedFile={logo_url}
-                maxSizeMB={2}
-              />
-              <FileInput
-                onFileSelect={handleDokPendukungFileSelect}
-                setSelectedFile={setDokPendukungUrl}
-                buttonText="Pilih Berkas"
-                multiple={false}
-                accept=".pdf"
-                Label="Unggah Dokumen Pendukung"
-                HelperText="Format .PDF dan maksimal 2MB"
-                state={dokPendukungUploadState}
-                onCancel={handleDokPendukungCancel}
-                selectedFile={dok_pendukung_url}
-                maxSizeMB={2}
-              />
-            </div>
-
-            <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-              <Button
-                label="Kembali"
-                variant="secondary"
-                size="md"
-                onClick={onBack}
-              />
-              <Button
-                label="Simpan & Lanjut"
-                variant="primary"
-                size="md"
-                onClick={onNext}
-              />
-            </div>
+  
+          <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
+            <Button variant="outlined_yellow" size="Medium" onClick={onBack}>
+              Kembali
+            </Button>
+            <Button variant="solid_blue" size="Medium" onClick={saveVendorData}>
+              Simpan & Lanjut
+            </Button>
           </div>
         </div>
-        <div className="flex flex-row justify-end items-right space-x-4 mt-3 bg-neutral-100 px-6 py-8 rounded-[16px]">
-          <Button variant="outlined_yellow" size="Medium" onClick={onBack}>
-            Kembali
-          </Button>
-          <Button variant="solid_blue" size="Medium" onClick={saveVendorData}>
-            Simpan & Lanjut
-          </Button>
-        </div>
+  
+        <CustomAlert
+          message={alertMessage}
+          severity={alertSeverity}
+          openInitially={alertOpen}
+          onClose={() => setAlertOpen(false)}
+        />
       </div>
-      <CustomAlert
-        message={alertMessage}
-        severity={alertSeverity}
-        openInitially={alertOpen}
-        onClose={() => setAlertOpen(false)}
-      />
-    </div>
-  );
-};
+    </>
+  ) : null;
+}  
 
 export default InputVendor;

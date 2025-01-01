@@ -8,7 +8,7 @@ const useStore = create((set) => ({
   fetchStatusProgres: async () => {
     try {
       const response = await axios.get(
-        "http://api-ecatalogue-staging.online/api/perencanaan-data/table-list-prencanaan-data"
+        "http://api-ecatalogue-staging.online/api/pemeriksaan-rekonsiliasi/get-list-data"
       );
       const { data } = response;
       if (data.status === "success") {

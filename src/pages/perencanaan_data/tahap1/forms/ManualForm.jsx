@@ -17,12 +17,9 @@ const ManualForm = ({
   hide = true,
   balaiOptions = [],
 }) => {
-  const {
-    setSelectedTab,
-    submitManual,
-  } = tahap1Store();
+  const { setSelectedTab, submitManual } = tahap1Store();
 
-  console.log(initialValues)
+  console.log(initialValues);
 
   const router = useRouter();
 
@@ -41,19 +38,16 @@ const ManualForm = ({
         <Formik
           initialValues={initialValues}
           onSubmit={async (values) => {
-            const isSuccess = await submitManual(values)
+            const isSuccess = await submitManual(values);
             if (isSuccess) {
-              router.push("/perencanaan_data/tahap2")
+              router.push("/perencanaan_data/tahap2");
             }
           }}
           enableReinitialize={true}
         >
           <Form>
-            <div classname="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-              <Field
-                name="kodeRup"
-                type="input"
-              >
+            <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
+              <Field name="kodeRup" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -63,15 +57,14 @@ const ManualForm = ({
                       placeholder="Masukkan Kode RUP"
                       size="Medium"
                       errorMessage="Kode RUP tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
               </Field>
-              <Field
-                name="namaBalai"
-                type="dropdown"
-              >
+              <Field name="namaBalai" type="dropdown">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <DropdownAPI
@@ -80,6 +73,7 @@ const ManualForm = ({
                       labelPosition="left"
                       placeholder="Pilih Nama Balai"
                       size="Medium"
+                      isRequired="true"
                       errorMessage="Nama Balai tidak boleh kosong"
                       options={balaiOptions}
                       value={field.value}
@@ -88,10 +82,7 @@ const ManualForm = ({
                   </div>
                 )}
               </Field>
-              <Field
-                name="namaPaket"
-                type="input"
-              >
+              <Field name="namaPaket" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -100,16 +91,16 @@ const ManualForm = ({
                       labelPosition="left"
                       placeholder="Masukkan Nama Paket"
                       size="Medium"
+                      isRequired="true"
                       errorMessage="Nama Paket tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
               </Field>
-              <Field
-                name="namaPpk"
-                type="input"
-              >
+              <Field name="namaPpk" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -118,16 +109,16 @@ const ManualForm = ({
                       labelPosition="left"
                       placeholder="Masukkan Nama PPK"
                       size="Medium"
+                      isRequired="true"
                       errorMessage="Nama PPK tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
               </Field>
-              <Field
-                name="jabatanPpk"
-                type="input"
-              >
+              <Field name="jabatanPpk" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -136,8 +127,11 @@ const ManualForm = ({
                       labelPosition="left"
                       placeholder="Masukkan Jabatan PPK"
                       size="Medium"
+                      isRequired="true"
                       errorMessage="Jabatan PPK tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
@@ -148,14 +142,16 @@ const ManualForm = ({
                 type="button"
                 variant="outlined_yellow"
                 size="Medium"
-                onClick={() => { }}>
+                onClick={() => {}}
+              >
                 Kembali
               </Button>
               <Button
                 type="submit"
                 variant="solid_blue"
                 size="Medium"
-                onClick={() => { }}>
+                onClick={() => {}}
+              >
                 Lanjut
               </Button>
             </div>
@@ -163,7 +159,7 @@ const ManualForm = ({
         </Formik>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default ManualForm;

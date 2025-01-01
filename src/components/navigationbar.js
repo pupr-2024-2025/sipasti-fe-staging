@@ -261,21 +261,21 @@ const Navbar = () => {
                           label: "Monitoring",
                           submenus: [
                             {
-                              href: "/pj_balai/monitoring/submenu1",
+                              href: "/pj_balai/monitoring/monitoring_perencanaan_data",
                               label: "Perencanaan Data",
                             },
                             {
-                              href: "/pj_balai/monitoring/submenu2",
+                              href: "/pj_balai/monitoring/monitoring_pengumpulan_data",
                               label: "Pengumpulan Data",
                             },
                             {
-                              href: "/pj_balai/monitoring/submenu2",
+                              href: "/pj_balai/monitoring/monitoring_pemeriksaan_data",
                               label: "Pemeriksaan Data",
                             },
-                            {
-                              href: "/pj_balai/monitoring/submenu2",
-                              label: "Penyebarluasan Data",
-                            },
+                            // {
+                            //   href: "/pj_balai/monitoring/submenu2",
+                            //   label: "Penyebarluasan Data",
+                            // },
                           ],
                         },
                         {

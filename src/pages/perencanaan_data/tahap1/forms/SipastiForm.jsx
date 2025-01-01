@@ -13,9 +13,7 @@ const SipastiForm = ({
   },
   hide = true,
 }) => {
-  const {
-    setSelectedTab,
-  } = tahap1Store();
+  const { setSelectedTab } = tahap1Store();
 
   return (
     <div className={`${hide ? "hidden" : ""}`}>
@@ -35,11 +33,8 @@ const SipastiForm = ({
           enableReinitialize={true}
         >
           <Form>
-            <div classname="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
-              <Field
-                name="kodeRup"
-                type="input"
-              >
+            <div className="mt-3 bg-neutral-100 px-6 py-8 rounded-[16px] space-y-8">
+              <Field name="kodeRup" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -49,15 +44,14 @@ const SipastiForm = ({
                       placeholder="Masukkan Kode RUP"
                       size="Medium"
                       errorMessage="Kode RUP tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
               </Field>
-              <Field
-                name="namaPaket"
-                type="input"
-              >
+              <Field name="namaPaket" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -67,20 +61,19 @@ const SipastiForm = ({
                       placeholder="Masukkan Nama Paket"
                       size="Medium"
                       errorMessage="Nama Paket tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
               </Field>
               <div className="px-[236px]">
-                <Button variant="disabled" size="Medium" onClick={() => { }}>
+                <Button variant="disabled" size="Medium" onClick={() => {}}>
                   Cari Data di SIPASTI
                 </Button>
               </div>
-              <Field
-                name="namaPpk"
-                type="input"
-              >
+              <Field name="namaPpk" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -90,15 +83,14 @@ const SipastiForm = ({
                       placeholder="Masukkan Nama PPK"
                       size="Medium"
                       errorMessage="Nama PPK tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
               </Field>
-              <Field
-                name="jabatanPpk"
-                type="input"
-              >
+              <Field name="jabatanPpk" type="input">
                 {({ field, form }) => (
                   <div className="flex flex-row items-center space-x-4">
                     <TextInput
@@ -108,7 +100,9 @@ const SipastiForm = ({
                       placeholder="Masukkan Jabatan PPK"
                       size="Medium"
                       errorMessage="Jabatan PPK tidak boleh kosong"
-                      onChange={(e) => form.setFieldValue(field.name, e.target.value)}
+                      onChange={(e) =>
+                        form.setFieldValue(field.name, e.target.value)
+                      }
                     />
                   </div>
                 )}
@@ -122,19 +116,21 @@ const SipastiForm = ({
           type="button"
           variant="outlined_yellow"
           size="Medium"
-          onClick={() => { }}>
+          onClick={() => {}}
+        >
           Kembali
         </Button>
         <Button
           type="submit"
           variant="solid_blue"
           size="Medium"
-          onClick={() => { }}>
+          onClick={() => {}}
+        >
           Lanjut
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default SipastiForm;
