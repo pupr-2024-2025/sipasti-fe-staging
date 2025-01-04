@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import TextInput from "../components/input";
 import Button from "../components/button";
-import FileInput from "../components/FileInput";
+import FileInput from "../components/fileinput";
 import IconCheckbox from "../components/checkbox";
 import { CloseCircle } from "iconsax-react";
 import Dropdown from "../components/dropdownontopofmodal";
