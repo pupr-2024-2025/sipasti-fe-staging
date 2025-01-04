@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Image from "next/image";
 
 const Checkbox = ({ label, checked: initialChecked = false, onChange }) => {
   const [checked, setChecked] = useState(initialChecked);
@@ -13,11 +14,12 @@ const Checkbox = ({ label, checked: initialChecked = false, onChange }) => {
 
   return (
     <div className="flex items-center justify-left space-x-2 h-full">
-      {" "}
       <button onClick={handleCheckboxChange} className="flex items-center">
-        <img
+        <Image
           src={checked ? "/images/checked.svg" : "/images/unchecked.svg"}
           alt={checked ? "Checked" : "Unchecked"}
+          width={24} // Adjust dimensions as needed
+          height={24}
         />
       </button>
       <span className="ml-2 text-emphasis-on_surface-medium">{label}</span>
