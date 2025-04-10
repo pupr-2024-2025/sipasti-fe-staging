@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+``;
 import { useRouter } from "next/router";
 import TextInput from "@/components/input";
-import Button from "@/components/button";
+import Button from "@/components/ui/buttonTS";
 import Modal from "@/components/modal";
 import CustomAlert from "@/components/alert";
 import Register from "@/pages/register";
@@ -157,7 +158,8 @@ const LoginForm = () => {
                 <Button
                   onClick={() => setIsRegisterModalOpen(true)}
                   variant="blue_text"
-                  size="Extra_Small">
+                  className="custom-padding"
+                  size="ExtraSmall">
                   Daftar
                 </Button>
               </div>

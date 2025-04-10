@@ -1,7 +1,30 @@
 import { motion } from "framer-motion";
-import React from "react";
+import React, { ReactNode, MouseEventHandler } from "react";
 
-const Button = ({
+type ButtonSize = "ExtraSmall" | "Small" | "Medium" | "Large" | "ExtraLarge";
+type ButtonVariant =
+  | "solid_blue"
+  | "solid_yellow"
+  | "outlined_blue"
+  | "outlined_yellow"
+  | "blue_text"
+  | "red_text"
+  | "outlined_icon"
+  | "disabled";
+
+type ButtonProps = {
+  children: ReactNode,
+  size?: ButtonSize,
+  variant?: ButtonVariant,
+  onClick?: MouseEventHandler<HTMLButtonElement>,
+  disabled?: boolean,
+  className?: string,
+  iconLeft?: ReactNode,
+  iconRight?: ReactNode,
+  type?: "button" | "submit" | "reset",
+};
+
+const Button: React.FC<ButtonProps> = ({
   children,
   size = "Medium",
   variant = "solid_blue",
@@ -12,7 +35,7 @@ const Button = ({
   iconRight = null,
   type = "button",
 }) => {
-  const sizes = {
+  const sizes: Record<ButtonSize, string> = {
     ExtraSmall: className?.includes("custom-padding")
       ? "text-ExtraSmall rounded-[8px]"
       : "px-3 py-1 text-ExtraSmall rounded-[8px]",
@@ -30,7 +53,7 @@ const Button = ({
       : "px-6 py-3 text-ExtraLarge rounded-[24px]",
   };
 
-  const variants = {
+  const variants: Record<ButtonVariant, string> = {
     solid_blue:
       "bg-custom-blue-500 text-emphasis-on_color-high hover:bg-custom-blue-600 active:bg-custom-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700",
     solid_yellow:
