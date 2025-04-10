@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 ``;
 import { useRouter } from "next/router";
-import TextInput from "@/components/input";
-import Button from "@/components/ui/buttonTS";
+import TextInput from "@/components/ui/TextInput";
+import Button from "@/components/ui/button";
 import Modal from "@/components/modal";
 import CustomAlert from "@/components/alert";
-import Register from "@/pages/register";
+import Register from "@/components/register/RegisterForm";
+// import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgotpassword";
 import { login, ssoLogin } from "@/api/auth";
 import { getToken, setToken } from "@/storage/token";
