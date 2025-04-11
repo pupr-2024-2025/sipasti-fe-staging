@@ -1,28 +1,23 @@
 import { useEffect, useState } from "react";
 ``;
 import { useRouter } from "next/router";
-import TextInput from "@/components/ui/TextInput";
+import TextInput from "@/components/ui/textinput";
 import Button from "@/components/ui/button";
 import Modal from "@/components/modal";
-import CustomAlert from "@/components/alert";
+import { useAlert } from "@/components/global/AlertContext";
 import Register from "@/components/register/RegisterForm";
 // import Register from "@/pages/register";
-import ForgotPassword from "@/pages/forgotpassword";
+import ForgotPassword from "@/components/forgotpassword/ForgotPassword";
 import { login, ssoLogin } from "@/api/auth";
 import { getToken, setToken } from "@/storage/token";
 
 const LoginForm = () => {
+  const { showAlert } = useAlert();
   const router = useRouter();
 
   const [username, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertSeverity, setAlertSeverity] = useState<"error" | "success">(
-    "error"
-  );
-
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] =
     useState(false);
@@ -41,14 +36,10 @@ const LoginForm = () => {
       if (data.status !== "success") throw new Error(data.message);
 
       setToken(data.token);
-      setAlertMessage("Login berhasil!");
-      setAlertSeverity("success");
-      setAlertOpen(true);
+      showAlert("Login berhasil!", "success");
       router.push("/dashboard");
     } catch (err: any) {
-      setAlertMessage(err.message);
-      setAlertSeverity("error");
-      setAlertOpen(true);
+      showAlert("Email atau Kata Sandi salah!", "error");
     }
   };
 
@@ -58,12 +49,10 @@ const LoginForm = () => {
       if (!data.success) throw new Error("Login SSO gagal.");
 
       setToken(data.token);
-      setAlertMessage("Login SSO berhasil!");
-      setAlertSeverity("success");
-      setAlertOpen(true);
+      showAlert("Login SSO berhasil!", "success");
       router.push("/dashboard");
     } catch (err: any) {
-      setErrors({ username: err.message });
+      showAlert(err.message || "Gagal login SSO", "error");
     }
   };
 
@@ -168,13 +157,6 @@ const LoginForm = () => {
           </div>
         </div>
       </div>
-
-      <CustomAlert
-        message={alertMessage}
-        severity={alertSeverity}
-        openInitially={alertOpen}
-        onClose={() => setAlertOpen(false)}
-      />
 
       <Modal
         isOpen={isRegisterModalOpen}

@@ -1,9 +1,9 @@
-// src/pages/_app.js
 import "../styles/globals.css";
 import localFont from "next/font/local";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import ProtectedRoute from "./protectedroute";
+import { AlertProvider } from "@/components/global/AlertContext"; // 🧠 import bro
 
 const poppins = localFont({
   src: "../styles/Poppins-Regular.woff",
@@ -24,13 +24,16 @@ function MyApp({ Component, pageProps }) {
   return (
     <div
       className={`${poppins.variable} font-[family-name:var(--font-poppins-r)] antialiased`}>
-      {router.pathname !== "/login" ? (
-        <ProtectedRoute>
+      <AlertProvider>
+        {" "}
+        {router.pathname !== "/login" ? (
+          <ProtectedRoute>
+            <Component {...pageProps} />
+          </ProtectedRoute>
+        ) : (
           <Component {...pageProps} />
-        </ProtectedRoute>
-      ) : (
-        <Component {...pageProps} />
-      )}
+        )}
+      </AlertProvider>
     </div>
   );
 }

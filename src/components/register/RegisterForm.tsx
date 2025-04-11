@@ -5,10 +5,11 @@ import FileInput from "@/components/fileinput";
 import IconCheckbox from "@/components/checkbox";
 import { CloseCircle } from "iconsax-react";
 import Dropdown from "@/components/dropdownontopofmodal";
-import CustomAlert from "@/components/alert";
+import { useAlert } from "@/components/global/AlertContext";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
 
 const RegisterForm = ({ onClose }: { onClose: () => void }) => {
+  const { showAlert } = useAlert();
   const {
     email,
     nama_lengkap,
@@ -23,20 +24,28 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
     isChecked,
     errorMessages,
     generalError,
-    alertMessage,
-    alertSeverity,
-    alertOpen,
     balaiOptions,
     satuanKerjaOptions,
     handleCancel,
     handleCheckboxChange,
     handleFileSelect,
-    handleRegister,
+    handleRegister: originalHandleRegister,
     handleInputChange,
     handleBalaiSelect,
     handleSatuanKerjaSelect,
-    setAlertOpen,
   } = useRegisterForm();
+
+  const handleRegister = async () => {
+    const result = await originalHandleRegister();
+
+    // Lo boleh ubah message-nya disini kalo mau gaya dikit
+    if (result.success) {
+      showAlert("🎉 Pendaftaran berhasil!", "success");
+      onClose(); // atau redirect, atau buka modal lain terserah lu bro
+    } else {
+      showAlert(result.message || "❌ Pendaftaran gagal, coba lagi.", "error");
+    }
+  };
 
   return (
     <div className="space-y-3 max-w-[90vw] max-h-[90vh] overflow-auto p-4">
@@ -56,7 +65,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
 
       <div className="flex items-center justify-left gap-x-1">
         <p className="text-Small text-neutral-500">Sudah punya akun?</p>
-        <Button variant="blue_text" size="Extra_Small" onClick={onClose}>
+        <Button variant="blue_text" size="ExtraSmall" onClick={onClose}>
           Masuk
         </Button>
       </div>
@@ -176,18 +185,12 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
           Batal
         </Button>
         <Button
-          onClick={handleRegister}
+          onClick={() => handleRegister()}
           variant="solid_blue"
           size="Medium"
           disabled={!isChecked}>
           Buat Akun
         </Button>
-        <CustomAlert
-          message={alertMessage}
-          severity={alertSeverity}
-          openInitially={alertOpen}
-          onClose={() => setAlertOpen(false)}
-        />
       </div>
     </div>
   );

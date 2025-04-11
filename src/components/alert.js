@@ -4,6 +4,7 @@ import Snackbar from "@mui/material/Snackbar";
 import { styled } from "@mui/material/styles";
 import { TickSquare, InfoCircle, Warning2, CloseCircle } from "iconsax-react";
 import colors from "../styles/colors";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CustomStyledAlert = styled(Alert)(({ severity }) => ({
   display: "flex",

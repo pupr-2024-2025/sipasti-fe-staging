@@ -2,10 +2,10 @@
 import { useEffect, useState } from "react";
 import { RegisterFormState, RegisterErrorMessages, OptionType } from "@/types/register";
 import { validateRegisterForm as validateForm } from "@/utils/validateForm";
-
-
+import { useAlert } from "@/components/global/AlertContext";
 
 export const useRegisterForm = () => {
+  const { showAlert } = useAlert();
   const [formValues, setFormValues] = useState<RegisterFormState>({
     email: "",
     nama_lengkap: "",
@@ -22,9 +22,6 @@ export const useRegisterForm = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [errorMessages, setErrorMessages] = useState<RegisterErrorMessages>({});
   const [generalError, setGeneralError] = useState("");
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertSeverity, setAlertSeverity] = useState("info");
-  const [alertOpen, setAlertOpen] = useState(false);
   const [balaiOptions, setBalaiOptions] = useState<OptionType[]>([]);
   const satuanKerjaOptions: OptionType[] = [{ value: "1", label: "satker_007" }];
   
@@ -92,31 +89,25 @@ export const useRegisterForm = () => {
   };
   
 
-  const handleRegister = async (onSuccess?: () => void) => {
+  const handleRegister = async (onSuccess?: () => void): Promise<{ success: boolean, message?: string }> => {
     setErrorMessages({});
     setGeneralError("");
-
+  
     const { errors, message } = validateForm(formValues);
-
-
+  
     if (Object.keys(errors).length > 0) {
       setErrorMessages(errors);
       setGeneralError(message);
-      return;
+      return { success: false, message };
     }
-
+  
     const formData = new FormData();
     Object.entries(formValues).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value);
-        }
-      });
-         
-    for (const pair of formData.entries()) {
-      console.log(`${pair[0]}:`, pair[1]);
-    }
-    
-
+      if (value !== null && value !== undefined) {
+        formData.append(key, value);
+      }
+    });
+  
     try {
       const response = await fetch(
         "https://api-ecatalogue-staging.online/api/store-user",
@@ -125,27 +116,27 @@ export const useRegisterForm = () => {
           body: formData,
         }
       );
-
+  
       const result = await response.json();
       if (!response.ok || result.status === "error") {
         throw new Error(result.message || "Terjadi kesalahan saat registrasi.");
       }
-
-      setAlertMessage(result.message || "Registrasi berhasil!");
-      setAlertSeverity("success");
-      setAlertOpen(true);
-
+  
+      showAlert(result.message || "Registrasi berhasil!", "success");
+  
       if (result.status === "success" && typeof onSuccess === "function") {
         onSuccess();
-      }         
+      }
+  
       console.log("✅ Register sukses, result:", result);
-
+      return { success: true };
+  
     } catch (error: any) {
-      setAlertMessage(error.message);
-      setAlertSeverity("error");
-      setAlertOpen(true);
+      showAlert(error.message || "Server error, coba lagi nanti.", "error");
+      return { success: false, message: error.message };
     }
   };
+  
 
   return {
     ...formValues,
@@ -155,10 +146,6 @@ export const useRegisterForm = () => {
     setIsChecked,
     errorMessages,
     generalError,
-    alertMessage,
-    alertSeverity,
-    alertOpen,
-    setAlertOpen,
     balaiOptions,
     satuanKerjaOptions,
     handleInputChange,
@@ -169,5 +156,6 @@ export const useRegisterForm = () => {
     handleBalaiSelect,
     handleSatuanKerjaSelect,
   };
+  
   
 };
