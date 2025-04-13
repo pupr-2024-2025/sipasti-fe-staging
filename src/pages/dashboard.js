@@ -1,5 +1,4 @@
 import React from "react";
-import Navbar from "../components/navigationbar";
 import { Line, Bar } from "react-chartjs-2";
 import ProtectedRoute from "./protectedroute";
 import {
@@ -82,7 +81,6 @@ const Dashboard = () => {
   return (
     <ProtectedRoute>
       <div className="p-8">
-        <Navbar />
         <div className="p-6  min-h-screen">
           <h2 className="text-3xl font-semibold text-gray-700 mb-4">
             Selamat Datang di Dashboard

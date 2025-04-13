@@ -3,12 +3,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import TextInput from "@/components/ui/textinput";
 import Button from "@/components/ui/button";
-import Modal from "@/components/modal";
+import Modal from "@/components/ui/modal";
 import { useAlert } from "@/components/global/AlertContext";
 import Register from "@/components/register/RegisterForm";
-// import Register from "@/pages/register";
 import ForgotPassword from "@/components/forgotpassword/ForgotPassword";
-import { login, ssoLogin } from "@/api/auth";
+import { login, ssoLogin, checkRole } from "@/api/auth";
 import { getToken, setToken } from "@/storage/token";
 
 const LoginForm = () => {
@@ -23,10 +22,30 @@ const LoginForm = () => {
     useState(false);
 
   useEffect(() => {
-    const token = getToken();
-    if (token && router.pathname === "/login") {
-      router.replace("/dashboard");
-    }
+    const checkTokenAndRole = async () => {
+      const token = getToken();
+
+      if (!token || router.pathname !== "/login") return;
+
+      try {
+        const data = await checkRole(token);
+        console.log("Data role:", data);
+        const { role } = data;
+
+        if (!role) {
+          console.error("Role tidak ditemukan dalam response");
+          return;
+        }
+
+        localStorage.setItem("role", role);
+        router.replace("/dashboard");
+      } catch (err) {
+        console.warn("Gagal validasi token atau ambil role:", err);
+        localStorage.removeItem("role");
+      }
+    };
+
+    checkTokenAndRole();
   }, [router]);
 
   const handleLogin = async () => {
@@ -35,7 +54,19 @@ const LoginForm = () => {
       const data = await login(username, password);
       if (data.status !== "success") throw new Error(data.message);
 
+      // 1. Simpan token ke localStorage
       setToken(data.token);
+      localStorage.setItem("token", data.token); // Pastikan token diset ke localStorage
+
+      // 2. Cek role setelah token diset
+      const { role } = await checkRole(data.token);
+      if (!role) {
+        throw new Error("Role tidak ditemukan");
+      }
+
+      // 3. Simpan role ke localStorage
+      localStorage.setItem("role", role);
+
       showAlert("Login berhasil!", "success");
       router.push("/dashboard");
     } catch (err: any) {

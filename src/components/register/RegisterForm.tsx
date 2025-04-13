@@ -4,7 +4,7 @@ import Button from "@/components/ui/button";
 import FileInput from "@/components/fileinput";
 import IconCheckbox from "@/components/checkbox";
 import { CloseCircle } from "iconsax-react";
-import Dropdown from "@/components/dropdownontopofmodal";
+import Dropdown from "@/components/ui/dropdown";
 import { useAlert } from "@/components/global/AlertContext";
 import { useRegisterForm } from "@/hooks/useRegisterForm";
 
@@ -109,7 +109,7 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
               label="Balai"
               placeholder="Pilih Balai"
               onSelect={handleBalaiSelect}
-              value={balai_kerja_id}
+              value={balaiOptions.find((opt) => opt.value === balai_kerja_id)}
               isRequired={true}
               errorMessage={errorMessages.balai_kerja_id}
             />
@@ -128,10 +128,12 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
             />
             <Dropdown
               options={satuanKerjaOptions}
-              label="Kategori Vendor/Perusahaan"
-              placeholder="Pilih kategori vendor/perusahaan"
+              label="Satuan Kerja"
+              placeholder="Pilih Satuan Kerja"
               errorMessage={errorMessages.satuan_kerja_id}
-              value={satuan_kerja_id}
+              value={satuanKerjaOptions.find(
+                (opt) => opt.value === satuan_kerja_id
+              )}
               onSelect={handleSatuanKerjaSelect}
               isRequired={true}
             />

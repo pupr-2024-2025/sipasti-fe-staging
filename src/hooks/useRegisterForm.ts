@@ -80,13 +80,20 @@ export const useRegisterForm = () => {
     setProgress(0);
   };
 
-  const handleBalaiSelect = (option: OptionType) => {
-    setFormValues((prev) => ({ ...prev, balai_kerja_id: option.value }));
-  };
-  
-  const handleSatuanKerjaSelect = (option: OptionType) => {
-    setFormValues((prev) => ({ ...prev, satuan_kerja_id: option.value }));
-  };
+const handleBalaiSelect = (option: OptionType | null) => {
+  setFormValues((prev) => ({
+    ...prev,
+    balai_kerja_id: option ? option.value : "",
+  }));
+};
+
+const handleSatuanKerjaSelect = (option: OptionType | null) => {
+  setFormValues((prev) => ({
+    ...prev,
+    satuan_kerja_id: option ? option.value : "",
+  }));
+};
+
   
 
   const handleRegister = async (onSuccess?: () => void): Promise<{ success: boolean, message?: string }> => {
