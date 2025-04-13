@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { CloseCircle } from "iconsax-react";
-import Select, { SingleValue, components } from "react-select";
+import Select, {
+  SingleValue,
+  MultiValue,
+  ActionMeta,
+  components,
+  MenuProps,
+} from "react-select";
 import { motion, AnimatePresence } from "framer-motion";
 import colors from "@/styles/colors";
 
@@ -35,17 +41,20 @@ const Dropdown: React.FC<DropdownProps> = ({
     setSelectedValue(value || null);
   }, [value]);
 
-  const handleChange = (selectedOption: SingleValue<OptionType>) => {
-    setSelectedValue(selectedOption);
-    onSelect(selectedOption);
+  const handleChange = (
+    selectedOption: SingleValue<OptionType> | MultiValue<OptionType>,
+    _actionMeta: ActionMeta<OptionType>
+  ) => {
+    const single = selectedOption as SingleValue<OptionType>;
+    setSelectedValue(single);
+    onSelect(single);
 
-    if (isRequired && !selectedOption) {
+    if (isRequired && !single) {
       setError(errorMessage);
     } else {
       setError("");
     }
   };
-
   const handleBlur = () => {
     if (isRequired && !selectedValue) {
       setError(errorMessage);
@@ -57,7 +66,7 @@ const Dropdown: React.FC<DropdownProps> = ({
     label: option.label,
   }));
 
-  const Menu = (props: any) => (
+  const Menu = (props: MenuProps<OptionType>) => (
     <AnimatePresence>
       {props.selectProps.menuIsOpen && (
         <motion.div
@@ -80,7 +89,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         </label>
       )}
 
-      <Select
+      <Select<OptionType, false>
         value={selectedValue}
         onChange={handleChange}
         onBlur={handleBlur}

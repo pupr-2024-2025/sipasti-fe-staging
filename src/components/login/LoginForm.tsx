@@ -59,7 +59,6 @@ const LoginForm = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("username", data.data.username);
 
-      // 🔥 Ambil role pake helper yang udah cakep
       const role = await fetchUserRole(token);
       localStorage.setItem("role", role);
 
@@ -80,9 +79,10 @@ const LoginForm = () => {
 
       showAlert("Login berhasil!", "success");
       router.push("/dashboard");
-    } catch (err: any) {
-      console.error("Login error:", err);
-      showAlert(err.message || "Email atau Kata Sandi salah!", "error");
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("Login error:", error);
+      showAlert(error.message || "Email atau Kata Sandi salah!", "error");
     }
   };
 
@@ -94,8 +94,9 @@ const LoginForm = () => {
       setToken(data.token);
       showAlert("Login SSO berhasil!", "success");
       router.push("/dashboard");
-    } catch (err: any) {
-      showAlert(err.message || "Gagal login SSO", "error");
+    } catch (err: unknown) {
+      const error = err as Error;
+      showAlert(error.message || "Gagal login SSO", "error");
     }
   };
 

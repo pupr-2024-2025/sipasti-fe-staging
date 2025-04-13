@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RegisterFormState, RegisterErrorMessages, OptionType } from "@/types/register";
+import { RegisterFormState, RegisterErrorMessages, OptionType, BalaiResponseItem } from "@/types/register";
 import { validateRegisterForm as validateForm } from "@/utils/validateForm";
 import { useAlert } from "@/components/global/AlertContext";
 
@@ -33,10 +33,11 @@ export const useRegisterForm = () => {
         );
         const result = await response.json();
         if (result && result.data && Array.isArray(result.data)) {
-          const formattedOptions = result.data.map((item: any) => ({
+          const formattedOptions = result.data.map((item: BalaiResponseItem) => ({
             value: item.id,
             label: item.nama,
           }));
+setBalaiOptions(formattedOptions);
           setBalaiOptions(formattedOptions);
         }
       } catch (error) {
@@ -47,7 +48,7 @@ export const useRegisterForm = () => {
     fetchBalaiOptions();
   }, []);
 
-  const handleInputChange = (field: keyof RegisterFormState, value: any)  => {
+  const handleInputChange = <K extends keyof RegisterFormState>(field: K, value: RegisterFormState[K]) => {
     setFormValues((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -137,10 +138,16 @@ const handleSatuanKerjaSelect = (option: OptionType | null) => {
       console.log("✅ Register sukses, result:", result);
       return { success: true };
   
-    } catch (error: any) {
-      showAlert(error.message || "Server error, coba lagi nanti.", "error");
-      return { success: false, message: error.message };
+    } catch (error) {
+      if (error instanceof Error) {
+        showAlert(error.message || "Server error, coba lagi nanti.", "error");
+        return { success: false, message: error.message };
+      } else {
+        showAlert("Unknown error occurred.", "error");
+        return { success: false, message: "Unknown error occurred." };
+      }
     }
+    
   };
   
 

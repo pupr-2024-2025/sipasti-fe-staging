@@ -23,8 +23,12 @@ export const fetchBalaiOptions = async () => {
       }
   
       return await response.json();
-    } catch (err: any) {
-      throw new Error(err.message || "Registrasi error");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        throw new Error(err.message || "Registrasi error");
+      }
+      throw new Error("Registrasi error");
     }
+    
   };
   
