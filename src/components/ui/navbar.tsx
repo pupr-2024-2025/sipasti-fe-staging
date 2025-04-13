@@ -9,6 +9,8 @@ import colors from "@/styles/colors";
 import CustomAlert from "./alert";
 
 const Navbar = () => {
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState("");
   const router = useRouter();
   const [hovered, setHovered] = useState<number | null>(null);
   const [isSticky, setIsSticky] = useState(false);
@@ -39,31 +41,76 @@ const Navbar = () => {
     }, 300);
   };
 
-  const links = [
-    { href: "/dashboard", label: "Beranda" },
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    const storedRole = localStorage.getItem("role");
+
+    console.log("🧠 Username from localStorage:", storedUsername);
+    console.log("🔐 Role from localStorage:", storedRole);
+
+    if (storedUsername) {
+      const cleanUsername = storedUsername.replace(/@gmail\.com$/i, "");
+      setUsername(cleanUsername);
+    }
+
+    if (storedRole) {
+      setRole(storedRole);
+    }
+  }, []);
+
+  const allLinks = [
+    {
+      href: "/dashboard",
+      label: "Beranda",
+      roles: [
+        "superadmin",
+        "Tim Teknis Balai",
+        "PJ Balai",
+        "Petugas Lapangan",
+        "Koordinator Provinsi",
+        "Pengolah Data",
+        "Pengawas",
+      ],
+    },
     {
       href: "",
       label: "Perencanaan Data",
       activePath: "/perencanaan_data",
+      roles: ["superadmin", "Tim Teknis Balai"],
     },
     {
-      href: "/pengumpulan_data/pengawas/informasi_tahap_pengumpulan",
+      href: "/pengumpulan_data/informasi_tahap_pengumpulan",
       label: "Pengumpulan Data",
       activePath: "/pengumpulan_data",
+      roles: ["superadmin", "Petugas Lapangan", "Pengolah Data", "Pengawas"],
     },
     {
       href: "/pemeriksaan_data/informasi_pemeriksaan_data",
       label: "Pemeriksaan",
       activePath: "/pemeriksaan_data",
+      roles: ["superadmin", "Koordinator Provinsi", "Tim Teknis Balai"],
     },
-    { href: "", label: "Responden/Vendor", activePath: "/vendor" },
-    { href: "", label: "Monitoring", activePath: "/pj_balai" },
+    {
+      href: "",
+      label: "Responden/Vendor",
+      activePath: "/vendor",
+      roles: ["superadmin", "Tim Teknis Balai"],
+    },
+    {
+      href: "",
+      label: "Monitoring",
+      activePath: "/pj_balai",
+      roles: ["superadmin", "PJ Balai"],
+    },
     {
       href: "/user_role/user_role",
       label: "Assign User",
       activePath: "/user_role",
+      roles: ["superadmin"],
     },
   ];
+
+  const links = allLinks.filter((link) => link.roles.includes(role));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -199,10 +246,10 @@ const Navbar = () => {
             </div>
             <div className="space-y-1 flex flex-col">
               <span className="text-emphasis-on_surface-high text-ExtraSmall">
-                Role
+                {role || "Role tidak tersedia"}
               </span>
               <span className="text-emphasis-on_surface-high text-H6">
-                Username
+                {username || "Pengguna"}
               </span>
             </div>
           </div>
@@ -220,12 +267,12 @@ const Navbar = () => {
               }}>
               <Link
                 href="/profile"
-                className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px]">
+                className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] cursor-not-allowed opacity-50 select-none">
                 Pengaturan Akun
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-sm text-custom-red-500 hover:bg-custom-red-50 rounded-[12px]">
+                className="w-full text-left px-4 py-2 text-sm text-custom-red-500 hover:bg-custom-red-50 rounded-[12px] ">
                 Keluar
               </button>
             </motion.div>

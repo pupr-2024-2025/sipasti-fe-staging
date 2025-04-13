@@ -7,7 +7,7 @@ import Modal from "@/components/ui/modal";
 import { useAlert } from "@/components/global/AlertContext";
 import Register from "@/components/register/RegisterForm";
 import ForgotPassword from "@/components/forgotpassword/ForgotPassword";
-import { login, ssoLogin, checkRole } from "@/api/auth";
+import { login, ssoLogin, checkRole, fetchUserRole } from "@/api/auth";
 import { getToken, setToken } from "@/storage/token";
 
 const LoginForm = () => {
@@ -54,23 +54,35 @@ const LoginForm = () => {
       const data = await login(username, password);
       if (data.status !== "success") throw new Error(data.message);
 
-      // 1. Simpan token ke localStorage
-      setToken(data.token);
-      localStorage.setItem("token", data.token); // Pastikan token diset ke localStorage
+      const token = data.token;
+      setToken(token);
+      localStorage.setItem("token", token);
+      localStorage.setItem("username", data.data.username);
 
-      // 2. Cek role setelah token diset
-      const { role } = await checkRole(data.token);
-      if (!role) {
-        throw new Error("Role tidak ditemukan");
-      }
-
-      // 3. Simpan role ke localStorage
+      // 🔥 Ambil role pake helper yang udah cakep
+      const role = await fetchUserRole(token);
       localStorage.setItem("role", role);
+
+      const validRoles = [
+        "superadmin",
+        "Tim Teknis Balai",
+        "PJ Balai",
+        "Petugas Lapangan",
+        "Pengolah Data",
+        "Koordinator Provinsi",
+        "Pengawas",
+        "Direktorat",
+      ];
+
+      if (!validRoles.includes(role)) {
+        throw new Error("Role tidak dikenali.");
+      }
 
       showAlert("Login berhasil!", "success");
       router.push("/dashboard");
     } catch (err: any) {
-      showAlert("Email atau Kata Sandi salah!", "error");
+      console.error("Login error:", err);
+      showAlert(err.message || "Email atau Kata Sandi salah!", "error");
     }
   };
 

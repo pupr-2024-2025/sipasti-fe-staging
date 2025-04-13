@@ -38,12 +38,11 @@ const RegisterForm = ({ onClose }: { onClose: () => void }) => {
   const handleRegister = async () => {
     const result = await originalHandleRegister();
 
-    // Lo boleh ubah message-nya disini kalo mau gaya dikit
     if (result.success) {
-      showAlert("🎉 Pendaftaran berhasil!", "success");
-      onClose(); // atau redirect, atau buka modal lain terserah lu bro
+      showAlert("Pendaftaran berhasil!", "success");
+      onClose();
     } else {
-      showAlert(result.message || "❌ Pendaftaran gagal, coba lagi.", "error");
+      showAlert(result.message || "Pendaftaran gagal, coba lagi.", "error");
     }
   };
 

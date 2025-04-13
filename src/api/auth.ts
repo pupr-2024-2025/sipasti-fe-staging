@@ -18,3 +18,21 @@ export const checkRole = async (token: string) => {
   });
   return res.data;
 };
+
+export const fetchUserRole = async (token: string) => {
+  try {
+    const res = await api.get("/check-role", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (res.data.status !== "success") {
+      throw new Error("Gagal memeriksa role pengguna.");
+    }
+
+    return res.data.data;
+  } catch (error) {
+    throw new Error("Gagal mem-fetch role.");
+  }
+};

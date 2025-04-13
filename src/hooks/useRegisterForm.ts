@@ -1,4 +1,3 @@
-// src/hooks/useRegisterForm.ts
 import { useEffect, useState } from "react";
 import { RegisterFormState, RegisterErrorMessages, OptionType } from "@/types/register";
 import { validateRegisterForm as validateForm } from "@/utils/validateForm";
