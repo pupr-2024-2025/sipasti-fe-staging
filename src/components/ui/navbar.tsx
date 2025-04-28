@@ -91,7 +91,7 @@ const Navbar = () => {
       roles: ["superadmin", "Koordinator Provinsi", "Tim Teknis Balai"],
     },
     {
-      href: "",
+      href: "/inputvendor",
       label: "Responden/Vendor",
       activePath: "/vendor",
       roles: ["superadmin", "Tim Teknis Balai"],
@@ -130,7 +130,6 @@ const Navbar = () => {
 
   return (
     <>
-      {/* CustomAlert for logout errors */}
       <CustomAlert
         message={alertMessage}
         severity="error"
@@ -139,28 +138,30 @@ const Navbar = () => {
       />
 
       <nav
-        className={`flex justify-between items-center ${
+        className={`relative flex items-center ${
           isSticky ? "sticky" : "relative"
         } pt-6 px-6`}>
         {/* Logo Container */}
-        <Link
-          href="/dashboard"
-          className="bg-custom-blue-500 flex items-center rounded-full py-6 px-7 transition-transform duration-300 ease-in-out hover:scale-110 active:scale-95">
-          <Image
-            src={logo}
-            alt="SIPASTI Logo"
-            className={`max-h-[54.37px] max-w-[156px] transition-transform duration-300 ease-in-out ${
-              links.some((link) =>
-                router.pathname.startsWith(link.activePath || link.href)
-              )
-                ? "scale-110"
-                : "scale-100"
-            }`}
-          />
-        </Link>
+        <div className="absolute left-6">
+          <Link
+            href="/dashboard"
+            className="bg-custom-blue-500 flex items-center rounded-full py-6 px-7 transition-transform duration-300 ease-in-out hover:scale-110 active:scale-95">
+            <Image
+              src={logo}
+              alt="SIPASTI Logo"
+              className={`max-h-[54.37px] max-w-[156px] transition-transform duration-300 ease-in-out ${
+                links.some((link) =>
+                  router.pathname.startsWith(link.activePath || link.href)
+                )
+                  ? "scale-110"
+                  : "scale-100"
+              }`}
+            />
+          </Link>
+        </div>
 
         {/* Navbar Links */}
-        <div className="flex items-center rounded-full bg-custom-neutral-100 mx-auto">
+        <div className="mx-auto bg-custom-neutral-100 rounded-full">
           <ul className="inline-flex flex-row items-center gap-x-3 px-2 h-[66px]">
             {links.map((link, index) => {
               const isActive = router.pathname.startsWith(
@@ -232,7 +233,7 @@ const Navbar = () => {
 
         {/* Profile Container */}
         <div
-          className="relative"
+          className="absolute right-6"
           onMouseEnter={handleProfileMouseEnter}
           onMouseLeave={handleProfileMouseLeave}>
           {/* Profile Button */}
@@ -256,26 +257,22 @@ const Navbar = () => {
 
           {/* Dropdown Menu */}
           {isProfileHovered && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute right-0 mt-[12px] w-60 bg-white rounded-[12px] p-2"
-              style={{
-                boxShadow: "0px 4px 16px 0px rgba(165, 163, 174, 0.45)",
-              }}>
-              <Link
-                href="/profile"
-                className="block px-4 py-2 text-sm text-emphasis-on_surface-high hover:bg-custom-blue-50 rounded-[12px] cursor-not-allowed opacity-50 select-none">
+            <div className="absolute right-0 mt-2 w-[256.41px] bg-white rounded-xl shadow-lg flex flex-col space-y-2 p-3 z-50">
+              <motion.div
+                whileHover={{ scale: 1.02, backgroundColor: "#f0f4ff" }}
+                transition={{ duration: 0.2 }}
+                className="block px-4 py-2 text-sm text-emphasis-on_surface-high rounded-[12px] cursor-not-allowed opacity-50 select-none pointer-events-none">
                 Pengaturan Akun
-              </Link>
-              <button
+              </motion.div>
+
+              <motion.button
+                whileHover={{ scale: 1.02, backgroundColor: "#ffe5e5" }}
+                transition={{ duration: 0.2 }}
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 text-sm text-custom-red-500 hover:bg-custom-red-50 rounded-[12px] ">
+                className="w-full text-left px-4 py-2 text-sm text-custom-red-500 rounded-[12px] hover:bg-custom-red-50">
                 Keluar
-              </button>
-            </motion.div>
+              </motion.button>
+            </div>
           )}
         </div>
       </nav>
