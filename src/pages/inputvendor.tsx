@@ -25,7 +25,6 @@ const InputVendor = ({}) => {
   const [provinsi_id, setProvinsiId] = useState("");
   const [kota_id, setKotaId] = useState("");
 
-  // File Upload Hook
   const {
     logo_url,
     setLogoUrl,
@@ -44,8 +43,17 @@ const InputVendor = ({}) => {
   const [alertSeverity, setAlertSeverity] = useState("info");
   const [alertOpen, setAlertOpen] = useState(false);
 
-  const handleCheckboxChange = (value) => {
-    // Handle checkbox change logic
+  const handleCheckboxChange = (type) => {
+    setSelectedTypes((prev) => {
+      const updatedTypes = prev.includes(type)
+        ? prev.filter((item) => item !== type)
+        : [...prev, type];
+
+      setjenis_vendor_id(updatedTypes.join(","));
+      console.log("Updated jenis_vendor_id:", updatedTypes.join(","));
+
+      return updatedTypes;
+    });
   };
 
   const getOptions = () => {
@@ -91,6 +99,8 @@ const InputVendor = ({}) => {
             kotaOptions,
             handleKotaChange,
             kota_id,
+            jenis_vendor_id,
+            setjenis_vendor_id,
           }}
         />
         <div className="flex-grow grid grid-cols-1 gap-4 py-8 px-6 rounded-[16px] bg-custom-neutral-100">

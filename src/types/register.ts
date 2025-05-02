@@ -16,7 +16,7 @@ export interface BalaiResponseItem {
   nama: string;
 }
 
-export interface OptionType {
+export interface DropdownOption  {
   value: string;
   label: string;
 }

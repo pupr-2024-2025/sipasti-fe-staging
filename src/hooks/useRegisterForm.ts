@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RegisterFormState, RegisterErrorMessages, OptionType, BalaiResponseItem } from "@/types/register";
+import { RegisterFormState, RegisterErrorMessages, DropdownOption , BalaiResponseItem } from "@/types/register";
 import { validateRegisterForm as validateForm } from "@/utils/validateForm";
 import { useAlert } from "@/components/global/AlertContext";
 
@@ -21,8 +21,8 @@ export const useRegisterForm = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [errorMessages, setErrorMessages] = useState<RegisterErrorMessages>({});
   const [generalError, setGeneralError] = useState("");
-  const [balaiOptions, setBalaiOptions] = useState<OptionType[]>([]);
-  const satuanKerjaOptions: OptionType[] = [{ value: "1", label: "satker_007" }];
+  const [balaiOptions, setBalaiOptions] = useState<DropdownOption []>([]);
+  const satuanKerjaOptions: DropdownOption [] = [{ value: "1", label: "satker_007" }];
   
 
   useEffect(() => {
@@ -80,14 +80,14 @@ setBalaiOptions(formattedOptions);
     setProgress(0);
   };
 
-const handleBalaiSelect = (option: OptionType | null) => {
+const handleBalaiSelect = (option: DropdownOption  | null) => {
   setFormValues((prev) => ({
     ...prev,
     balai_kerja_id: option ? option.value : "",
   }));
 };
 
-const handleSatuanKerjaSelect = (option: OptionType | null) => {
+const handleSatuanKerjaSelect = (option: DropdownOption  | null) => {
   setFormValues((prev) => ({
     ...prev,
     satuan_kerja_id: option ? option.value : "",

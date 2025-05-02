@@ -1,10 +1,12 @@
 import React from "react";
 import TextInput from "@/components/ui/textinput";
-import Dropdown, { OptionType } from "@/components/ui/dropdown";
+import Dropdown, { DropdownOption } from "@/components/ui/dropdown";
 import Checkbox from "../checkbox";
 import { InputVendorFormProps } from "@/types/inputvendor";
 
 const InputVendorForm: React.FC<InputVendorFormProps> = ({
+  jenis_vendor_id,
+  setjenis_vendor_id,
   nama_vendor,
   setnama_vendor,
   selectedTypes,
@@ -29,16 +31,16 @@ const InputVendorForm: React.FC<InputVendorFormProps> = ({
   handleKotaChange,
   kota_id,
 }) => {
-  const kategoriOptions = getOptions() ?? [];
+  const kategoriOptions = (getOptions() ?? []) as DropdownOption[];
 
-  const selectedKategori: OptionType | null =
+  const selectedKategori: DropdownOption | null =
     kategoriOptions.find((option) => option.value === kategori_vendor_id) ||
     null;
 
-  const selectedProvinsi: OptionType | null =
+  const selectedProvinsi: DropdownOption | null =
     provinsiOptions.find((option) => option.value === provinsi_id) || null;
 
-  const selectedKota: OptionType | null =
+  const selectedKota: DropdownOption | null =
     kotaOptions.find((option) => option.value === kota_id) || null;
 
   return (

@@ -10,17 +10,17 @@ import Select, {
 import { motion, AnimatePresence } from "framer-motion";
 import colors from "@/styles/colors";
 
-export interface OptionType {
+export interface DropdownOption {
   value: string;
   label: string;
 }
 
 interface DropdownProps {
-  options: OptionType[];
+  options: DropdownOption[];
   label?: string;
   placeholder?: string;
-  onSelect: (selected: OptionType | null) => void;
-  value?: OptionType | null;
+  onSelect: (selected: DropdownOption | null) => void;
+  value?: DropdownOption | null;
   isRequired?: boolean;
   errorMessage?: string;
 }
@@ -34,7 +34,9 @@ const Dropdown: React.FC<DropdownProps> = ({
   isRequired = false,
   errorMessage = "Wajib Diisi",
 }) => {
-  const [selectedValue, setSelectedValue] = useState<OptionType | null>(value);
+  const [selectedValue, setSelectedValue] = useState<DropdownOption | null>(
+    value
+  );
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
@@ -42,10 +44,10 @@ const Dropdown: React.FC<DropdownProps> = ({
   }, [value]);
 
   const handleChange = (
-    selectedOption: SingleValue<OptionType> | MultiValue<OptionType>,
-    _actionMeta: ActionMeta<OptionType>
+    selectedOption: SingleValue<DropdownOption> | MultiValue<DropdownOption>,
+    _actionMeta: ActionMeta<DropdownOption>
   ) => {
-    const single = selectedOption as SingleValue<OptionType>;
+    const single = selectedOption as SingleValue<DropdownOption>;
     setSelectedValue(single);
     onSelect(single);
 
@@ -66,7 +68,7 @@ const Dropdown: React.FC<DropdownProps> = ({
     label: option.label,
   }));
 
-  const Menu = (props: MenuProps<OptionType>) => (
+  const Menu = (props: MenuProps<DropdownOption>) => (
     <AnimatePresence>
       {props.selectProps.menuIsOpen && (
         <motion.div
@@ -89,7 +91,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         </label>
       )}
 
-      <Select<OptionType, false>
+      <Select<DropdownOption, false>
         value={selectedValue}
         onChange={handleChange}
         onBlur={handleBlur}
